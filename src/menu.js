@@ -21,7 +21,6 @@ function getMenu(userChannel, channelBoldTags) {
 
 function createMenuContent(userChannel, channelBoldTags, menuFields) {
     let menu = {};
-    menu.content = getTextMenu(menuFields, channelBoldTags);
     menu.type = 'application/vnd.lime.select+json';
     try {
         if (userChannel === 'blipchat' || userChannel === 'facebook') {
@@ -36,7 +35,6 @@ function createMenuContent(userChannel, channelBoldTags, menuFields) {
             menu.content = getTextMenu(menuFields, channelBoldTags);
         }
     } catch (exception) {
-        menu.content = getTextMenu(menuFields, channelBoldTags);
         throw exception;
     } finally {
         return menu;
