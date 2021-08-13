@@ -19,7 +19,7 @@ function getMenu(userChannel, channelBoldTags) {
     return menu;
 }
 
-function createMenuContent(userChannel, channelBoldTags, menuFields) {
+function createMenu(userChannel, channelBoldTags, menuFields) {
     let menu = {};
     menu.type = 'application/vnd.lime.select+json';
     try {
