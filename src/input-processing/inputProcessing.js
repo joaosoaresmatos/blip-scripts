@@ -226,7 +226,8 @@ function replaceSpecialLetters(input) {
         ç: 'c'
     };
     for (const key in specialCharToCommonChar) {
-        input = input.replace(key, specialCharToCommonChar[key]);
+        let keyRegex = new RegExp(`${key}`, 'gi');
+        input = input.replace(keyRegex, specialCharToCommonChar[key]);
     }
     return input;
 }
