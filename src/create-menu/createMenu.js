@@ -1,10 +1,17 @@
-//Simule [REQUIREMENTS] variables.
-//let channelBoldTags = { open: '<b>', close: '</b>' };
+// Assert [REQUIREMENTS] variables.
+
+// let channelBoldTags = { open: '<b>', close: '</b>' };
 let channelBoldTags = { open: '*', close: '*' };
 channelBoldTags = JSON.stringify(channelBoldTags);
-console.log(JSON.stringify(run('blipchat', channelBoldTags)));
+let userChannel = 'whatsapp';
+console.log('-------------');
+console.log(JSON.stringify(run(userChannel, channelBoldTags)));
+console.log('-------------');
+console.log(run(userChannel, channelBoldTags));
+console.log('-------------');
 
-//Code of builder here
+// Code of builder here
+
 function run(userChannel, channelBoldTags) {
     return getMenu(userChannel, channelBoldTags);
 }
@@ -12,27 +19,55 @@ function run(userChannel, channelBoldTags) {
 function getMenu(userChannel, channelBoldTags) {
     channelBoldTags = JSON.parse(channelBoldTags);
     const MENU_FIELDS = {
-        text: `This is a text to describe the menu, the user will ${channelBoldTags.open}choose one option bellow${channelBoldTags.close}`,
+        text: {
+            default: `This is a text to describe the menu, the user will ${channelBoldTags.open}choose one option bellow${channelBoldTags.close} (channel: default)`,
+            whatsapp: `This is a text to describe the menu, the user will ${channelBoldTags.open}choose one option bellow${channelBoldTags.close} (channel: whatsapp)`
+        },
         options: ['Option 1', 'Option 2', 'Option 3']
     };
-    let menu = createMenuContent(userChannel, channelBoldTags, MENU_FIELDS);
+    let config = {
+        hasDefaultQuickReply: false,
+        hasWppQuickReply: true,
+        isBlipImmediateMenu: false
+    };
+    let menu = createMenu(userChannel, channelBoldTags, MENU_FIELDS, config);
     return menu;
 }
 
-function createMenu(userChannel, channelBoldTags, menuFields) {
+// Below are all scripts used in menu creation process
+// It should be put in the router resources in order to be used by the above script
+
+function createMenu(
+    userChannel,
+    channelBoldTags,
+    menuFields,
+    config = {
+        hasDefaultQuickReply: true,
+        hasWppQuickReply: true,
+        isBlipImmediateMenu: true
+    }
+) {
     let menu = {};
     menu.type = 'application/vnd.lime.select+json';
     try {
-        if (userChannel === 'blipchat' || userChannel === 'facebook') {
-            menu.content = getQuickReply(menuFields, channelBoldTags);
+        if (
+            config.hasDefaultQuickReply &&
+            (userChannel === 'blipchat' || userChannel === 'facebook')
+        ) {
+            menu.content = getQuickReply(menuFields, config);
         } else if (
             userChannel === 'whatsapp' &&
-            menuFields.options.length < 4
+            menuFields.options.length < 4 &&
+            config.hasWppQuickReply
         ) {
-            menu.content = getQuickWppReply(menuFields, channelBoldTags);
+            menu.content = getQuickWppReply(menuFields);
             menu.type = 'application/json';
         } else {
-            menu.content = getTextMenu(menuFields, channelBoldTags);
+            menu.content = getTextMenu(
+                menuFields,
+                userChannel,
+                channelBoldTags
+            );
         }
     } catch (exception) {
         throw exception;
@@ -60,7 +95,7 @@ function getQuickWppReply(menuFields) {
         interactive: {
             type: 'button',
             body: {
-                text: menuFields.text
+                text: menuFields.text.whatsapp || menuFields.text.default
             },
             action: {
                 buttons: menuOptions
@@ -70,9 +105,13 @@ function getQuickWppReply(menuFields) {
     return quickReplyContent;
 }
 
-function getTextMenu(menuFields, channelBoldTags) {
+function getTextMenu(menuFields, userChannel, channelBoldTags) {
     var options = menuFields.options;
-    let menuText = menuFields.text + '\n';
+    let menuText = menuFields.text.default + '\n';
+
+    if (userChannel == 'whatsapp' && menuFields.text.whatsapp) {
+        menuText = menuFields.text.whatsapp + '\n';
+    }
     if (menuFields.enableOptions != false) {
         let totalItens = parseInt(options.length);
         if (menuFields.orderOptions == 'desc') {
@@ -102,7 +141,7 @@ function getTextMenu(menuFields, channelBoldTags) {
     return textMenu;
 }
 
-function getQuickReply(menuFields) {
+function getQuickReply(menuFields, config) {
     let menuOptions = [];
     if (menuFields.options) {
         for (let i = 0; i < menuFields.options.length; i++) {
@@ -120,9 +159,11 @@ function getQuickReply(menuFields) {
         }
     }
     let quickReplyContent = {
-        scope: 'immediate',
-        text: menuFields.text,
+        text: menuFields.text.default,
         options: menuOptions
     };
+    if (config.isBlipImmediateMenu) {
+        quickReplyContent.scope = 'immediate';
+    }
     return quickReplyContent;
 }

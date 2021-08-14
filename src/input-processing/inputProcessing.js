@@ -1,4 +1,9 @@
-console.log(run('menu', 'text/plain'));
+// Assert [REQUIREMENTS] variables.
+
+let testInput = 'menu';
+console.log(run(testInput, 'text/plain'));
+
+// Code of builder here
 
 function run(inputContent, inputType) {
     return getSelectedMenuOption(inputContent, inputType);
@@ -52,10 +57,17 @@ function getSelectedMenuOption(inputContent, inputType) {
             value: 'Nome valido'
         }
     );
+    let config = {
+        isNumberMenu: true,
+        isReversed: false,
+        shouldRemoveSpecialCharacters: true,
+        shouldRemoveWhiteSpaces: false
+    };
     let selectedMenuOption = validateInputMenuOptions(
         inputContent,
         optionsRegex,
-        inputType
+        inputType,
+        config
     );
     // //begin name logic
     if (selectedMenuOption.value === 'Nome valido') {
@@ -78,17 +90,23 @@ function getSelectedMenuOption(inputContent, inputType) {
     return selectedMenuOption;
 }
 
+// Below are all scripts used to process inputs
+// It should be put in the router resources in order to be used by the above script
+
 function validateInputMenuOptions(
     input,
     optionsRegex,
     inputType,
     config = {
         isNumberMenu: true,
-        isReversed: false
+        isReversed: false,
+        shouldRemoveSpecialCharacters: true,
+        shouldRemoveWhiteSpaces: true
     }
 ) {
     const UNEXPECTED_INPUT = 'Input inesperado';
     let inputInfo = {
+        input: input,
         value: UNEXPECTED_INPUT,
         tracking: UNEXPECTED_INPUT,
         inputMatch: UNEXPECTED_INPUT,
@@ -98,8 +116,12 @@ function validateInputMenuOptions(
         return inputInfo;
     }
     try {
-        input = removeExcessWhiteSpace(input);
-        inputCleaned = removeSpecialCharacters(input);
+        input = config.shouldRemoveWhiteSpaces
+            ? removeExcessWhiteSpace(input)
+            : input;
+        inputCleaned = config.shouldRemoveSpecialCharacters
+            ? removeSpecialCharacters(input, config)
+            : input;
 
         for (let option in optionsRegex) {
             let matching = new RegExp(optionsRegex[option].regex, 'gi');
@@ -131,12 +153,14 @@ function validateInputMenuOptions(
                     inputInfo.tracking = optionsRegex[option].tracking;
                 } else {
                     inputInfo.tracking = getCleanedInputToTracking(
-                        optionsRegex[option].value
+                        optionsRegex[option].value,
+                        config
                     );
                 }
                 inputInfo.inputMatch = matchArray.shift();
                 inputInfo.inputMatchClean = removeSpecialCharacters(
-                    inputInfo.inputMatch
+                    inputInfo.inputMatch,
+                    config
                 );
                 break;
             }
@@ -149,8 +173,8 @@ function validateInputMenuOptions(
 }
 
 function isInvalidType(inputType) {
-    const typeValid = 'text/plain';
-    return inputType != typeValid;
+    const validType = 'text/plain';
+    return inputType != validType;
 }
 
 function capitalizeAll(text) {
@@ -189,12 +213,14 @@ function removeExcessWhiteSpace(input) {
     return input.replace(WHITE_SPACES, SPACE_STR);
 }
 
-function removeSpecialCharacters(input) {
+function removeSpecialCharacters(input, config) {
     const EMPTY_STR = '';
     const SPECIAL_CHAR = RegExp('[^\\w\\s]*', 'gi');
     input = replaceSpecialLetters(input);
     input = input.replace(SPECIAL_CHAR, EMPTY_STR);
-    input = removeExcessWhiteSpace(input);
+    input = config.shouldRemoveWhiteSpaces
+        ? removeExcessWhiteSpace(input)
+        : input;
     return input;
 }
 
@@ -226,7 +252,8 @@ function replaceSpecialLetters(input) {
         ç: 'c'
     };
     for (const key in specialCharToCommonChar) {
-        input = input.replace(key, specialCharToCommonChar[key]);
+        let keyRegex = new RegExp(`${key}`, 'gi');
+        input = input.replace(keyRegex, specialCharToCommonChar[key]);
     }
     return input;
 }
@@ -259,9 +286,10 @@ function getCleanedInputToNlp(input) {
     return cleanedInputToNlp;
 }
 
-// The convention of Trackings is only first letter uppercase without special caracters
-function getCleanedInputToTracking(input) {
-    cleanedInputToTracking = removeSpecialCharacters(input);
+// The convention of Trackings is only first letter uppercase without special characters
+
+function getCleanedInputToTracking(input, config) {
+    cleanedInputToTracking = removeSpecialCharacters(input, config);
     cleanedInputToTracking = capitalizeFirst(cleanedInputToTracking);
     return cleanedInputToTracking;
 }
