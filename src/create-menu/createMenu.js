@@ -27,12 +27,17 @@ function getMenu(userChannel, channelBoldTags) {
         },
         options: ['Option 1', 'Option 2', 'Option 3']
     };
+    let props = {
+        menuFields,
+        userChannel,
+        channelBoldTags
+    };
     let config = {
         hasDefaultQuickReply: false,
         hasWppQuickReply: true,
         isBlipImmediateMenu: false
     };
-    let menu = createMenu(userChannel, channelBoldTags, menuFields, config);
+    let menu = createMenu(props, config);
     return menu;
 }
 
@@ -40,35 +45,43 @@ function getMenu(userChannel, channelBoldTags) {
 // It should be put in the router resources in order to be used by the above script
 
 function createMenu(
-    userChannel,
-    channelBoldTags,
-    menuFields,
+    props = {
+        userChannel,
+        channelBoldTags,
+        menuFields
+    },
     config = {
         hasDefaultQuickReply: true,
         hasWppQuickReply: true,
         isBlipImmediateMenu: true
     }
 ) {
+    let { userChannel, menuFields } = props;
     let menu = {};
     try {
         if (
             config.hasDefaultQuickReply &&
             (userChannel === 'blipchat' || userChannel === 'facebook')
         ) {
-            menu.content = getQuickReply(menuFields, userChannel, config);
+            menu.content = getQuickReply(
+                props,
+                config
+            );
             menu.type = 'application/vnd.lime.select+json';
         } else if (
             userChannel === 'whatsapp' &&
             menuFields.options.length < 4 &&
             config.hasWppQuickReply
         ) {
-            menu.content = getQuickWppReply(menuFields, userChannel);
+            menu.content = getWppQuickReply(
+                props,
+                config
+            );
             menu.type = 'application/json';
         } else {
             menu.content = getTextMenu(
-                menuFields,
-                userChannel,
-                channelBoldTags
+                props,
+                config
             );
         }
     } catch (exception) {
@@ -81,7 +94,36 @@ function createMenu(
     }
 }
 
-function getQuickWppReply(menuFields, userChannel) {
+function getQuickReply(props, config) {
+    let { userChannel, menuFields } = props;
+    let menuOptions = [];
+    if (menuFields.options) {
+        for (let i = 0; i < menuFields.options.length; i++) {
+            let value;
+            if (menuFields.values) {
+                value = menuFields.values[i];
+            } else {
+                value = menuFields.options[i];
+            }
+            menuOptions.push({
+                text: menuFields.options[i],
+                type: 'text/plain',
+                value: value
+            });
+        }
+    }
+    let quickReplyContent = {
+        text: menuFields.text[userChannel] || menuFields.text.default,
+        options: menuOptions
+    };
+    if (config.isBlipImmediateMenu) {
+        quickReplyContent.scope = 'immediate';
+    }
+    return quickReplyContent;
+}
+
+function getWppQuickReply(props, config) {
+    let { userChannel, menuFields } = props;
     let menuOptions = [];
     if (menuFields.options) {
         for (let i = 0; i < menuFields.options.length; i++) {
@@ -109,7 +151,8 @@ function getQuickWppReply(menuFields, userChannel) {
     return quickReplyContent;
 }
 
-function getTextMenu(menuFields, userChannel, channelBoldTags) {
+function getTextMenu(props, config) {
+    let { userChannel, channelBoldTags, menuFields } = props;
     let options = menuFields.options;
     let menuText = (menuFields.text[userChannel] || menuFields.text.default) + '\n';
 
@@ -140,31 +183,4 @@ function getTextMenu(menuFields, userChannel, channelBoldTags) {
     }
     let textMenu = { text: menuText };
     return textMenu;
-}
-
-function getQuickReply(menuFields, userChannel, config) {
-    let menuOptions = [];
-    if (menuFields.options) {
-        for (let i = 0; i < menuFields.options.length; i++) {
-            let value;
-            if (menuFields.values) {
-                value = menuFields.values[i];
-            } else {
-                value = menuFields.options[i];
-            }
-            menuOptions.push({
-                text: menuFields.options[i],
-                type: 'text/plain',
-                value: value
-            });
-        }
-    }
-    let quickReplyContent = {
-        text: menuFields.text[userChannel] || menuFields.text.default,
-        options: menuOptions
-    };
-    if (config.isBlipImmediateMenu) {
-        quickReplyContent.scope = 'immediate';
-    }
-    return quickReplyContent;
 }
