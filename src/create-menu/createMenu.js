@@ -20,8 +20,10 @@ function getMenu(userChannel, channelBoldTags) {
     channelBoldTags = JSON.parse(channelBoldTags);
     const MENU_FIELDS = {
         text: {
-            default: `This is a text to describe the menu, the user will ${channelBoldTags.open}choose one option bellow${channelBoldTags.close} (channel: default)`,
-            whatsapp: `This is a text to describe the menu, the user will ${channelBoldTags.open}choose one option bellow${channelBoldTags.close} (channel: whatsapp)`
+            default: `This is a text to describe the menu that will be generated to Default channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+            whatsapp: `This is a text to describe the menu that will be generated to WhatsApp channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+            facebook: `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+            telegram: `This is a text to describe the menu that will be generated to Telegram channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
         },
         options: ['Option 1', 'Option 2', 'Option 3']
     };
@@ -48,19 +50,19 @@ function createMenu(
     }
 ) {
     let menu = {};
-    menu.type = 'application/vnd.lime.select+json';
     try {
         if (
             config.hasDefaultQuickReply &&
             (userChannel === 'blipchat' || userChannel === 'facebook')
         ) {
-            menu.content = getQuickReply(menuFields, config);
+            menu.content = getQuickReply(menuFields, userChannel, config);
+            menu.type = 'application/vnd.lime.select+json';
         } else if (
             userChannel === 'whatsapp' &&
             menuFields.options.length < 4 &&
             config.hasWppQuickReply
         ) {
-            menu.content = getQuickWppReply(menuFields);
+            menu.content = getQuickWppReply(menuFields, userChannel);
             menu.type = 'application/json';
         } else {
             menu.content = getTextMenu(
@@ -76,7 +78,7 @@ function createMenu(
     }
 }
 
-function getQuickWppReply(menuFields) {
+function getQuickWppReply(menuFields, userChannel) {
     let menuOptions = [];
     if (menuFields.options) {
         for (let i = 0; i < menuFields.options.length; i++) {
@@ -89,13 +91,12 @@ function getQuickWppReply(menuFields) {
             });
         }
     }
-
     let quickReplyContent = {
         type: 'interactive',
         interactive: {
             type: 'button',
             body: {
-                text: menuFields.text.whatsapp || menuFields.text.default
+                text: menuFields.text[userChannel] || menuFields.text.default
             },
             action: {
                 buttons: menuOptions
@@ -106,12 +107,9 @@ function getQuickWppReply(menuFields) {
 }
 
 function getTextMenu(menuFields, userChannel, channelBoldTags) {
-    var options = menuFields.options;
-    let menuText = menuFields.text.default + '\n';
+    let options = menuFields.options;
+    let menuText = (menuFields.text[userChannel] || menuFields.text.default) + '\n';
 
-    if (userChannel == 'whatsapp' && menuFields.text.whatsapp) {
-        menuText = menuFields.text.whatsapp + '\n';
-    }
     if (menuFields.enableOptions != false) {
         let totalItens = parseInt(options.length);
         if (menuFields.orderOptions == 'desc') {
@@ -141,7 +139,7 @@ function getTextMenu(menuFields, userChannel, channelBoldTags) {
     return textMenu;
 }
 
-function getQuickReply(menuFields, config) {
+function getQuickReply(menuFields, userChannel, config) {
     let menuOptions = [];
     if (menuFields.options) {
         for (let i = 0; i < menuFields.options.length; i++) {
@@ -159,7 +157,7 @@ function getQuickReply(menuFields, config) {
         }
     }
     let quickReplyContent = {
-        text: menuFields.text.default,
+        text: menuFields.text[userChannel] || menuFields.text.default,
         options: menuOptions
     };
     if (config.isBlipImmediateMenu) {
