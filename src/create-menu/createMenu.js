@@ -18,7 +18,7 @@ function run(userChannel, channelBoldTags) {
 
 function getMenu(userChannel, channelBoldTags) {
     channelBoldTags = JSON.parse(channelBoldTags);
-    const MENU_FIELDS = {
+    const menuFields = {
         text: {
             default: `This is a text to describe the menu that will be generated to Default channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
             whatsapp: `This is a text to describe the menu that will be generated to WhatsApp channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
@@ -32,7 +32,7 @@ function getMenu(userChannel, channelBoldTags) {
         hasWppQuickReply: true,
         isBlipImmediateMenu: false
     };
-    let menu = createMenu(userChannel, channelBoldTags, MENU_FIELDS, config);
+    let menu = createMenu(userChannel, channelBoldTags, menuFields, config);
     return menu;
 }
 
@@ -72,6 +72,9 @@ function createMenu(
             );
         }
     } catch (exception) {
+        menu.type = 'application/vnd.lime.select+json';
+        menu.content = { text: `Something went wrong while generating menu. Please, visit https://github.com/joaosoaresmatos/blip-scripts/blob/main/README.md to read more about it.\n\nDescription:\n\n${exception}` }
+
         throw exception;
     } finally {
         return menu;
