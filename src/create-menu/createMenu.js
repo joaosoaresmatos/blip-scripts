@@ -56,7 +56,7 @@ function createMenu(
         isBlipImmediateMenu: true
     }
 ) {
-    let { userChannel, menuFields } = props;
+    let { userChannel } = props;
     let menu = {};
     try {
         if (
