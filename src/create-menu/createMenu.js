@@ -83,6 +83,7 @@ function createMenu(
                 props,
                 config
             );
+            menu.type = 'application/vnd.lime.select+json';
         }
     } catch (exception) {
         menu.type = 'application/vnd.lime.select+json';
