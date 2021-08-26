@@ -56,38 +56,31 @@ function createMenu(
         isBlipImmediateMenu: true
     }
 ) {
-    let { userChannel } = props;
+    let { userChannel, menuFields } = props;
     let menu = {};
     try {
         if (
             config.hasDefaultQuickReply &&
             (userChannel === 'blipchat' || userChannel === 'facebook')
         ) {
-            menu.content = getQuickReply(
-                props,
-                config
-            );
+            menu.content = getQuickReply(props, config);
             menu.type = 'application/vnd.lime.select+json';
         } else if (
             userChannel === 'whatsapp' &&
             menuFields.options.length < 4 &&
             config.hasWppQuickReply
         ) {
-            menu.content = getWppQuickReply(
-                props,
-                config
-            );
+            menu.content = getWppQuickReply(props, config);
             menu.type = 'application/json';
         } else {
-            menu.content = getTextMenu(
-                props,
-                config
-            );
+            menu.content = getTextMenu(props, config);
             menu.type = 'application/vnd.lime.select+json';
         }
     } catch (exception) {
         menu.type = 'application/vnd.lime.select+json';
-        menu.content = { text: `Something went wrong while generating menu. Please, visit https://github.com/joaosoaresmatos/blip-scripts/blob/main/README.md to read more about it.\n\nDescription:\n\n${exception}` }
+        menu.content = {
+            text: `Something went wrong while generating menu. Please, visit https://github.com/joaosoaresmatos/blip-scripts/blob/main/README.md to read more about it.\n\nDescription:\n\n${exception}`
+        };
 
         throw exception;
     } finally {
@@ -155,7 +148,8 @@ function getWppQuickReply(props, config) {
 function getTextMenu(props, config) {
     let { userChannel, channelBoldTags, menuFields } = props;
     let options = menuFields.options;
-    let menuText = (menuFields.text[userChannel] || menuFields.text.default) + '\n';
+    let menuText =
+        (menuFields.text[userChannel] || menuFields.text.default) + '\n';
 
     if (menuFields.enableOptions != false) {
         let totalItens = parseInt(options.length);
