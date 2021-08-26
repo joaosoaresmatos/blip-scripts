@@ -3,7 +3,7 @@
 // let channelBoldTags = { open: '<b>', close: '</b>' };
 let channelBoldTags = { open: '*', close: '*' };
 channelBoldTags = JSON.stringify(channelBoldTags);
-let userChannel = 'whatsapp';
+let userChannel = 'instagram';
 console.log('-------------');
 console.log(JSON.stringify(run(userChannel, channelBoldTags)));
 console.log('-------------');
@@ -20,22 +20,36 @@ function getMenu(userChannel, channelBoldTags) {
     channelBoldTags = JSON.parse(channelBoldTags);
     const menuFields = {
         text: {
-            default: `This is a text to describe the menu that will be generated to Default channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
-            whatsapp: `This is a text to describe the menu that will be generated to WhatsApp channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
-            facebook: `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+            default: {
+                'en-US': `This is a text to describe the menu that will be generated to Default channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+                'pt-BR': `This is a text to describe the menu that will be generated to Default channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
+            },
+            whatsapp: {
+                'en-US': `This is a text to describe the menu that will be generated to WhatsApp channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+                'pt-BR': `This is a text to describe the menu that will be generated to WhatsApp channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
+            },
+            facebook: {
+                'en-US': `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+                'pt-BR': `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
+            },
             telegram: `This is a text to describe the menu that will be generated to Telegram channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
         },
-        options: ['Option 1', 'Option 2', 'Option 3']
+        options: {
+            'en-US': ['Option 1', 'Option 2', 'Option 3'],
+            'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
+        }
     };
     let props = {
         menuFields,
         userChannel,
-        channelBoldTags
+        channelBoldTags,
+        userLanguage: 'pt-BR'
     };
     let config = {
-        hasDefaultQuickReply: false,
+        hasDefaultQuickReply: true,
         hasWppQuickReply: true,
-        isBlipImmediateMenu: false
+        isBlipImmediateMenu: true,
+        orderOptions: 'desc'
     };
     let menu = createMenu(props, config);
     return menu;
@@ -48,14 +62,17 @@ function createMenu(
     props = {
         userChannel,
         channelBoldTags,
-        menuFields
+        menuFields,
+        userLanguage
     },
     config = {
         hasDefaultQuickReply: true,
         hasWppQuickReply: true,
-        isBlipImmediateMenu: true
+        isBlipImmediateMenu: true,
+        orderOptions: 'asc'
     }
 ) {
+    props = normalizeProps(props);
     let { userChannel, menuFields } = props;
     let menu = {};
     try {
@@ -89,26 +106,22 @@ function createMenu(
 }
 
 function getQuickReply(props, config) {
-    let { userChannel, menuFields } = props;
-    let menuOptions = [];
-    if (menuFields.options) {
-        for (let i = 0; i < menuFields.options.length; i++) {
-            let value;
-            if (menuFields.values) {
-                value = menuFields.values[i];
-            } else {
-                value = menuFields.options[i];
-            }
-            menuOptions.push({
-                text: menuFields.options[i],
+    let { menuFields } = props;
+    let menuText = menuFields.text;
+    let menuOptions = menuFields.options;
+    let quickReplyOptions = [];
+    if (menuOptions) {
+        for (let i = 0; i < menuOptions.length; i++) {
+            quickReplyOptions.push({
+                text: menuOptions[i],
                 type: 'text/plain',
-                value: value
+                value: menuOptions[i]
             });
         }
     }
     let quickReplyContent = {
-        text: menuFields.text[userChannel] || menuFields.text.default,
-        options: menuOptions
+        text: menuText,
+        options: quickReplyOptions
     };
     if (config.isBlipImmediateMenu) {
         quickReplyContent.scope = 'immediate';
@@ -117,15 +130,17 @@ function getQuickReply(props, config) {
 }
 
 function getWppQuickReply(props, config) {
-    let { userChannel, menuFields } = props;
-    let menuOptions = [];
-    if (menuFields.options) {
-        for (let i = 0; i < menuFields.options.length; i++) {
-            menuOptions.push({
+    let { menuFields } = props;
+    let menuText = menuFields.text;
+    let menuOptions = menuFields.options;
+    let quickReplyOptions = [];
+    if (menuOptions) {
+        for (let i = 0; i < menuOptions.length; i++) {
+            quickReplyOptions.push({
                 type: 'reply',
                 reply: {
-                    id: menuFields.options[i],
-                    title: menuFields.options[i]
+                    id: menuOptions[i],
+                    title: menuOptions[i]
                 }
             });
         }
@@ -135,10 +150,10 @@ function getWppQuickReply(props, config) {
         interactive: {
             type: 'button',
             body: {
-                text: menuFields.text[userChannel] || menuFields.text.default
+                text: menuText
             },
             action: {
-                buttons: menuOptions
+                buttons: quickReplyOptions
             }
         }
     };
@@ -146,21 +161,19 @@ function getWppQuickReply(props, config) {
 }
 
 function getTextMenu(props, config) {
-    let { userChannel, channelBoldTags, menuFields } = props;
-    let options = menuFields.options;
-    let menuText =
-        (menuFields.text[userChannel] || menuFields.text.default) + '\n';
-
+    let { channelBoldTags, menuFields } = props;
+    let menuText = menuFields.text;
+    let menuOptions = menuFields.options;
     if (menuFields.enableOptions != false) {
-        let totalItens = parseInt(options.length);
-        if (menuFields.orderOptions == 'desc') {
+        let totalItens = parseInt(menuOptions.length);
+        if (config.orderOptions == 'desc') {
             start = totalItens - 1;
             for (let i = start, j = 0; i >= 0; i--, j++) {
                 menuText +=
                     `\n${channelBoldTags.open}` +
                     (i + 1) +
                     `${channelBoldTags.close}. ` +
-                    options[j];
+                    menuOptions[j];
             }
         } else {
             for (let i = 0; i < totalItens; i++) {
@@ -172,10 +185,25 @@ function getTextMenu(props, config) {
                     `\n${channelBoldTags.open}` +
                     option +
                     `${channelBoldTags.close}. ` +
-                    options[i];
+                    menuOptions[i];
             }
         }
     }
     let textMenu = { text: menuText };
     return textMenu;
+}
+
+function normalizeProps(props) {
+    let { userChannel, menuFields, userLanguage } = props;
+    let menuText =
+        menuFields.text?.[userChannel]?.[userLanguage] ||
+        menuFields.text?.default?.[userLanguage] ||
+        menuFields.text?.[userChannel] ||
+        menuFields.text?.default ||
+        menuFields.text;
+    let menuOptions = menuFields.options?.[userLanguage] || menuFields.options;
+
+    props.menuFields.text = menuText;
+    props.menuFields.options = menuOptions;
+    return props;
 }
