@@ -68,7 +68,7 @@ function getSelectedMenuOption(inputContent, inputType) {
         shouldRemoveSpecialCharacters: true,
         shouldRemoveWhiteSpaces: false
     };
-    let selectedMenuOption = validateInputMenuOptions(props, config);
+    let selectedMenuOption = validateInputOptions(props, config);
     // //begin name logic
     if (selectedMenuOption.value === 'Nome valido') {
         selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
@@ -93,14 +93,14 @@ function getSelectedMenuOption(inputContent, inputType) {
 // Below are all scripts used to process inputs
 // It should be put in the router resources in order to be used by the above script
 
-function validateInputMenuOptions(
+function validateInputOptions(
     props = {
         input,
         optionsRegex,
         inputType
     },
     config = {
-        isNumberMenu: true,
+        isNumberMenu: false,
         isReversed: false,
         shouldRemoveSpecialCharacters: true,
         shouldRemoveWhiteSpaces: true
