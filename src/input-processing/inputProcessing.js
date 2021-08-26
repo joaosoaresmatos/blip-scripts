@@ -43,7 +43,7 @@ function getSelectedMenuOption(inputContent, inputType) {
         },
         // Phone Validation | Valid Examples: +5531999999999, (31)999999999
         {
-            regex: /\b(?:(?:\+|00)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})\-?(\d{4}))\b/,
+            regex: /\b(?:(?:\+|00)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})-?(\d{4}))\b/,
             value: 'Phone number'
         },
         // Email Validation | Valid Examples: name.optional@domain.com
@@ -57,18 +57,18 @@ function getSelectedMenuOption(inputContent, inputType) {
             value: 'Nome valido'
         }
     );
+    let props = {
+        input: inputContent,
+        optionsRegex,
+        inputType
+    };
     let config = {
         isNumberMenu: true,
         isReversed: false,
         shouldRemoveSpecialCharacters: true,
         shouldRemoveWhiteSpaces: false
     };
-    let selectedMenuOption = validateInputMenuOptions(
-        inputContent,
-        optionsRegex,
-        inputType,
-        config
-    );
+    let selectedMenuOption = validateInputOptions(props, config);
     // //begin name logic
     if (selectedMenuOption.value === 'Nome valido') {
         selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
@@ -76,7 +76,7 @@ function getSelectedMenuOption(inputContent, inputType) {
             selectedMenuOption.inputMatchClean
         );
     }
-    //end name logic
+    // end name logic
     // //begin phone logic
     if (selectedMenuOption.value === 'Telefone') {
         selectedMenuOption.inputMatch = removeWhiteSpace(
@@ -86,27 +86,31 @@ function getSelectedMenuOption(inputContent, inputType) {
             selectedMenuOption.inputMatchClean
         );
     }
-    //end phone logic
+    // end phone logic
     return selectedMenuOption;
 }
 
 // Below are all scripts used to process inputs
 // It should be put in the router resources in order to be used by the above script
 
-function validateInputMenuOptions(
-    input,
-    optionsRegex,
-    inputType,
+function validateInputOptions(
+    props = {
+        input,
+        optionsRegex,
+        inputType
+    },
     config = {
-        isNumberMenu: true,
+        isNumberMenu: false,
         isReversed: false,
         shouldRemoveSpecialCharacters: true,
         shouldRemoveWhiteSpaces: true
     }
 ) {
+    let { input, optionsRegex, inputType } = props;
+
     const UNEXPECTED_INPUT = 'Input inesperado';
     let inputInfo = {
-        input: input,
+        input,
         value: UNEXPECTED_INPUT,
         tracking: UNEXPECTED_INPUT,
         inputMatch: UNEXPECTED_INPUT,
@@ -119,7 +123,7 @@ function validateInputMenuOptions(
         input = config.shouldRemoveWhiteSpaces
             ? removeExcessWhiteSpace(input)
             : input;
-        inputCleaned = config.shouldRemoveSpecialCharacters
+        let inputCleaned = config.shouldRemoveSpecialCharacters
             ? removeSpecialCharacters(input, config)
             : input;
 
@@ -174,7 +178,7 @@ function validateInputMenuOptions(
 
 function isInvalidType(inputType) {
     const validType = 'text/plain';
-    return inputType != validType;
+    return inputType !== validType;
 }
 
 function capitalizeAll(text) {
@@ -280,7 +284,7 @@ function getNumberWrittenRegex(number) {
 }
 
 function getCleanedInputToNlp(input) {
-    cleanedInputToNlp = replaceSpecialLetters(input);
+    let cleanedInputToNlp = replaceSpecialLetters(input);
     cleanedInputToNlp = removeLinks(cleanedInputToNlp);
     cleanedInputToNlp = removeExcessWhiteSpace(cleanedInputToNlp);
     return cleanedInputToNlp;
@@ -289,7 +293,7 @@ function getCleanedInputToNlp(input) {
 // The convention of Trackings is only first letter uppercase without special characters
 
 function getCleanedInputToTracking(input, config) {
-    cleanedInputToTracking = removeSpecialCharacters(input, config);
+    let cleanedInputToTracking = removeSpecialCharacters(input, config);
     cleanedInputToTracking = capitalizeFirst(cleanedInputToTracking);
     return cleanedInputToTracking;
 }

@@ -3,7 +3,8 @@
 // let channelBoldTags = { open: '<b>', close: '</b>' };
 let channelBoldTags = { open: '*', close: '*' };
 channelBoldTags = JSON.stringify(channelBoldTags);
-let userChannel = 'instagram';
+let userChannel = 'blipchat';
+
 console.log('-------------');
 console.log(JSON.stringify(run(userChannel, channelBoldTags)));
 console.log('-------------');
@@ -32,7 +33,10 @@ function getMenu(userChannel, channelBoldTags) {
                 'en-US': `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
                 'pt-BR': `This is a text to describe the menu that will be generated to Facebook channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
             },
-            telegram: `This is a text to describe the menu that will be generated to Telegram channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
+            telegram: {
+                'en-US': `This is a text to describe the menu that will be generated to Telegram channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`,
+                'pt-BR': `This is a text to describe the menu that will be generated to Telegram channel, the user will ${channelBoldTags.open}choose one of the options bellow${channelBoldTags.close}`
+            }
         },
         options: {
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
@@ -72,10 +76,10 @@ function createMenu(
         orderOptions: 'asc'
     }
 ) {
-    props = normalizeProps(props);
-    let { userChannel, menuFields } = props;
     let menu = {};
     try {
+        props = normalizeProps(props);
+        let { userChannel, menuFields } = props;
         if (
             config.hasDefaultQuickReply &&
             (userChannel === 'blipchat' || userChannel === 'facebook')
@@ -164,16 +168,14 @@ function getTextMenu(props, config) {
     let { channelBoldTags, menuFields } = props;
     let menuText = menuFields.text;
     let menuOptions = menuFields.options;
-    if (menuFields.enableOptions != false) {
+    if (menuFields.enableOptions !== false) {
         let totalItens = parseInt(menuOptions.length);
-        if (config.orderOptions == 'desc') {
+        if (config.orderOptions === 'desc') {
             start = totalItens - 1;
             for (let i = start, j = 0; i >= 0; i--, j++) {
-                menuText +=
-                    `\n${channelBoldTags.open}` +
-                    (i + 1) +
-                    `${channelBoldTags.close}. ` +
-                    menuOptions[j];
+                menuText += `\n${channelBoldTags.open}${i + 1}${
+                    channelBoldTags.close
+                }. ${menuOptions[j]}`;
             }
         } else {
             for (let i = 0; i < totalItens; i++) {
@@ -181,11 +183,7 @@ function getTextMenu(props, config) {
                 if (menuFields.isSurvey) {
                     option = totalItens - i;
                 }
-                menuText +=
-                    `\n${channelBoldTags.open}` +
-                    option +
-                    `${channelBoldTags.close}. ` +
-                    menuOptions[i];
+                menuText += `\n${channelBoldTags.open}${option}${channelBoldTags.close}. ${menuOptions[i]}`;
             }
         }
     }
@@ -194,16 +192,53 @@ function getTextMenu(props, config) {
 }
 
 function normalizeProps(props) {
-    let { userChannel, menuFields, userLanguage } = props;
-    let menuText =
-        menuFields.text?.[userChannel]?.[userLanguage] ||
-        menuFields.text?.default?.[userLanguage] ||
-        menuFields.text?.[userChannel] ||
-        menuFields.text?.default ||
-        menuFields.text;
-    let menuOptions = menuFields.options?.[userLanguage] || menuFields.options;
+    let menuText = normalizeMenuText(props);
+    let menuOptions = normalizeMenuOptions(props);
 
     props.menuFields.text = menuText;
     props.menuFields.options = menuOptions;
     return props;
 }
+
+function normalizeMenuText(props) {
+    let { userChannel, menuFields, userLanguage } = props;
+    let menuText;
+    if (
+        menuFields.text[userChannel] &&
+        menuFields.text[userChannel][userLanguage]
+    ) {
+        menuText = menuFields.text[userChannel][userLanguage];
+    } else if (
+        menuFields.text.default &&
+        menuFields.text.default[userLanguage]
+    ) {
+        menuText = menuFields.text.default[userLanguage];
+    } else if (menuFields.text[userChannel]) {
+        menuText = menuFields.text[userChannel];
+    } else if (menuFields.text.default) {
+        menuText = menuFields.text.default;
+    } else {
+        menuText = menuFields.text;
+    }
+    return menuText;
+}
+
+function normalizeMenuOptions(props) {
+    let { menuFields, userLanguage } = props;
+    let menuOptions;
+    if (menuFields.options[userLanguage]) {
+        menuOptions = menuFields.options[userLanguage];
+    } else {
+        menuOptions = menuFields.options;
+    }
+    return menuOptions;
+}
+
+module.exports = {
+    getMenu,
+    createMenu,
+    getQuickReply,
+    getWppQuickReply,
+    getTextMenu,
+    normalizeProps
+};
