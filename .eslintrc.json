@@ -22,6 +22,17 @@
         "no-var": ["error"],
         "semi": ["error", "always"],
         "comma-dangle": ["error", "never"],
-        "curly": ["error", "all"]
+        "curly": ["error", "all"],
+        "no-param-reassign": "off",
+        "no-use-before-define": "off",
+        "no-unused-vars": "off",
+        "no-restricted-syntax": "off",
+        "guard-for-in": "off",
+        "prefer-const": "off",
+        "no-useless-catch": "off",
+        "no-unsafe-finally": "off",
+        "no-shadow": "off",
+        "no-plusplus": "off",
+        "no-undef": "off"
     }
 }
