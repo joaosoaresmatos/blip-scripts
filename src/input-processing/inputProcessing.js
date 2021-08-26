@@ -57,18 +57,18 @@ function getSelectedMenuOption(inputContent, inputType) {
             value: 'Nome valido'
         }
     );
+    let props = {
+        input: inputContent,
+        optionsRegex,
+        inputType
+    };
     let config = {
         isNumberMenu: true,
         isReversed: false,
         shouldRemoveSpecialCharacters: true,
         shouldRemoveWhiteSpaces: false
     };
-    let selectedMenuOption = validateInputMenuOptions(
-        inputContent,
-        optionsRegex,
-        inputType,
-        config
-    );
+    let selectedMenuOption = validateInputMenuOptions(props, config);
     // //begin name logic
     if (selectedMenuOption.value === 'Nome valido') {
         selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
