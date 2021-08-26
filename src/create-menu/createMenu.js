@@ -164,16 +164,12 @@ function getTextMenu(props, config) {
     let { channelBoldTags, menuFields } = props;
     let menuText = menuFields.text;
     let menuOptions = menuFields.options;
-    if (menuFields.enableOptions != false) {
+    if (menuFields.enableOptions !== false) {
         let totalItens = parseInt(menuOptions.length);
-        if (config.orderOptions == 'desc') {
+        if (config.orderOptions === 'desc') {
             start = totalItens - 1;
             for (let i = start, j = 0; i >= 0; i--, j++) {
-                menuText +=
-                    `\n${channelBoldTags.open}` +
-                    (i + 1) +
-                    `${channelBoldTags.close}. ` +
-                    menuOptions[j];
+                menuText += `\n${channelBoldTags.open}(i + 1)${channelBoldTags.close}. ${menuOptions[j]}`;
             }
         } else {
             for (let i = 0; i < totalItens; i++) {
@@ -181,11 +177,7 @@ function getTextMenu(props, config) {
                 if (menuFields.isSurvey) {
                     option = totalItens - i;
                 }
-                menuText +=
-                    `\n${channelBoldTags.open}` +
-                    option +
-                    `${channelBoldTags.close}. ` +
-                    menuOptions[i];
+                menuText += `\n${channelBoldTags.open}${option}${channelBoldTags.close}. ${menuOptions[i]}`;
             }
         }
     }
