@@ -1,0 +1,44 @@
+{
+    "name": "blip-scripts",
+    "version": "1.0.0",
+    "description": "This repository is a tool to help the developers of platform blip in some tasks",
+    "author": "Joao Soares de Matos Neto <joaosoaresmatos28@gmail.com>",
+    "contributors": [
+        {
+            "name": "Pietro Bondioli",
+            "email": "pietrobondiolideveloper@gmail.com",
+            "url": "http://pietrobondioli.com.br/"
+        }
+    ],
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest",
+        "prepare": "husky install"
+    },
+    "lint-staged": {
+        "**/*.js": "eslint --fix",
+        "**/*": "prettier --write --ignore-unknown"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/joaosoaresmatos/blip-scripts.git"
+    },
+    "bugs": {
+        "url": "https://github.com/joaosoaresmatos/blip-scripts/issues"
+    },
+    "homepage": "https://github.com/joaosoaresmatos/blip-scripts#readme",
+    "devDependencies": {
+        "@commitlint/cli": "^13.1.0",
+        "@commitlint/config-conventional": "^13.1.0",
+        "eslint": "^7.32.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-import": "^2.24.2",
+        "eslint-plugin-prettier": "^3.4.1",
+        "husky": "^7.0.2",
+        "jest": "^27.0.6",
+        "lint-staged": "^11.1.2",
+        "prettier": "^2.3.2"
+    }
+}
