@@ -63,19 +63,31 @@ function getMenu(userChannel, channelBoldTags) {
 // It should be put in the router resources in order to be used by the above script
 
 function createMenu(
-    props = {
+    {
+        userChannel = null,
+        channelBoldTags = null,
+        menuFields = null,
+        userLanguage = null
+    } = {},
+    {
+        hasDefaultQuickReply = true,
+        hasWppQuickReply = true,
+        isBlipImmediateMenu = true,
+        orderOptions = 'asc'
+    } = {}
+) {
+    let props = {
         userChannel,
         channelBoldTags,
         menuFields,
         userLanguage
-    },
-    config = {
-        hasDefaultQuickReply: true,
-        hasWppQuickReply: true,
-        isBlipImmediateMenu: true,
-        orderOptions: 'asc'
-    }
-) {
+    };
+    let config = {
+        hasDefaultQuickReply,
+        hasWppQuickReply,
+        isBlipImmediateMenu,
+        orderOptions
+    };
     let menu = {};
     try {
         props = normalizeProps(props);

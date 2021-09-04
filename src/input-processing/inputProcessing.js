@@ -94,19 +94,20 @@ function getSelectedMenuOption(inputContent, inputType) {
 // It should be put in the router resources in order to be used by the above script
 
 function validateInputOptions(
-    props = {
-        input,
-        optionsRegex,
-        inputType
-    },
-    config = {
-        isNumberMenu: false,
-        isReversed: false,
-        shouldRemoveSpecialCharacters: true,
-        shouldRemoveWhiteSpaces: true
-    }
+    { input = null, optionsRegex = null, inputType = null } = {},
+    {
+        isNumberMenu = false,
+        isReversed = false,
+        shouldRemoveSpecialCharacters = true,
+        shouldRemoveWhiteSpaces = true
+    } = {}
 ) {
-    let { input, optionsRegex, inputType } = props;
+    let config = {
+        isNumberMenu,
+        isReversed,
+        shouldRemoveSpecialCharacters,
+        shouldRemoveWhiteSpaces
+    };
 
     const UNEXPECTED_INPUT = 'Input inesperado';
     let inputInfo = {
