@@ -21,5 +21,10 @@ const commonRegex = [
     {
         regex: /^(([A-Za-z]+)?[A-Za-z]{2}(\s+([A-Za-z]+)?[A-Za-z]{2})+)$/,
         value: 'Name'
+    },
+    // Car plate Validation | Valid Examples: CMG-3164, CMG 3164, qrm7e33, RIO2A18
+    {
+        regex: /\b^([a-z]{3}(-?|\s?)[0-9]{4}|[a-z]{3}[0-9][a-z][0-9]{2})$\b/,
+        value: 'Car plate'
     }
 ];
