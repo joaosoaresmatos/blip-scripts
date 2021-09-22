@@ -3,7 +3,7 @@
 // let channelBoldTags = { open: '<b>', close: '</b>' };
 let channelBoldTags = { open: '*', close: '*' };
 channelBoldTags = JSON.stringify(channelBoldTags);
-let userChannel = 'blipchat';
+let userChannel = 'whatsapp';
 
 console.log('-------------');
 console.log(JSON.stringify(run(userChannel, channelBoldTags)));
@@ -41,6 +41,28 @@ function getMenu(userChannel, channelBoldTags) {
         options: {
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
             'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
+        },
+        /*options: { //This option structure allows you to create a menu separated by sessions in Whatsapp (Only). Maximum of 10 sessions and 10 options (regardless of the number of sessions) 
+            'en-US': {
+                "Sessão 1": ['Option 1', 'Option 2', 'Option 3'],
+                "Sess]ao 2": ['Option 4', 'Option 5', 'Option 6']
+            },
+            'pt-BR': {
+                "Sessão 1": ['Option 1', 'Option 2', 'Option 3'],
+                "Sessão 2": ['Option 4', 'Option 5', 'Option 6']
+            }
+        },*/
+        header: { //Optional (Only used in list-type Whatsapp menu)
+            'en-US': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters",
+            'pt-BR': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters"
+        },
+        footer: { //Optional (Only used in list-type Whatsapp menu)
+            'en-US': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters",
+            'pt-BR': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters"
+        },
+        button: { //Required if list type Whatsapp menu
+            'en-US': "This is a text of menu button in Whatsapp channel",
+            'pt-BR': "This is a text of menu button in Whatsapp channel"
         }
     };
     let props = {
@@ -50,9 +72,10 @@ function getMenu(userChannel, channelBoldTags) {
         userLanguage: 'pt-BR'
     };
     let config = {
-        hasDefaultQuickReply: true,
-        hasWppQuickReply: true,
-        isBlipImmediateMenu: true,
+        hasDefaultQuickReply: false,
+        hasWppQuickReply: false,
+        hasWppListMenu: true,
+        isBlipImmediateMenu: false,
         orderOptions: 'desc'
     };
     let menu = createMenu(props, config);
@@ -72,6 +95,7 @@ function createMenu(
     {
         hasDefaultQuickReply = true,
         hasWppQuickReply = true,
+        hasWppListMenu = false,
         isBlipImmediateMenu = true,
         orderOptions = 'asc'
     } = {}
@@ -85,6 +109,7 @@ function createMenu(
     let config = {
         hasDefaultQuickReply,
         hasWppQuickReply,
+        hasWppListMenu,
         isBlipImmediateMenu,
         orderOptions
     };
@@ -104,6 +129,13 @@ function createMenu(
             config.hasWppQuickReply
         ) {
             menu.content = getWppQuickReply(props, config);
+            menu.type = 'application/json';
+        } else if (
+            userChannel === 'whatsapp' &&
+            config.hasWppListMenu &&
+            (menuFields.options.length < 11 || validateOptionsToWhatsappListMenu(props))
+        ) {
+            menu.content = getWppListMenu(props, config);
             menu.type = 'application/json';
         } else {
             menu.content = getTextMenu(props, config);
@@ -176,6 +208,14 @@ function getWppQuickReply(props, config) {
     return quickReplyContent;
 }
 
+function getWppListMenu(props) {
+    const action = {
+        button: props.menuFields.textButton,
+        sections: buildSections(props.menuFields.options)
+    };
+    return getInteractiveMenu(props.menuFields, "list", action);
+}
+
 function getTextMenu(props, config) {
     let { channelBoldTags, menuFields } = props;
     let menuText = menuFields.text;
@@ -203,12 +243,92 @@ function getTextMenu(props, config) {
     return textMenu;
 }
 
+function getInteractiveMenu(menuFields, type, action) {
+    return {
+        recipient_type: "individual",
+        type: "interactive",
+        interactive: {
+            type: type,
+            ...buildHeader(menuFields),
+            body: {
+                text: menuFields.text,
+            },
+            ...buildFooter(menuFields),
+            action: action
+        }
+    }
+}
+
+function buildHeader(menuFields) {
+    return (!menuFields.header) ? {} : { header: { type: "text", text: menuFields.header } };
+}
+
+function buildFooter(menuFields) {
+    return (!menuFields.footer) ? {} : { footer: { text: menuFields.header } };
+}
+
+function validateOptionsToWhatsappListMenu(props) {
+    try {
+        const options = Object.keys(props.menuFields.options);
+        let optionsCount = 0;
+        for (let i = 0; i < options.length; i++) {
+            optionsCount = optionsCount + props.menuFields.options[options[i]].length;
+        }
+        return optionsCount < 11 ? true : false;
+    } catch (error) {
+        return false;
+    }
+
+}
+
+function buildSections(menuOptions) {
+    if (Array.isArray(menuOptions)) {
+        return [
+            {
+                rows: buildListOptions(menuOptions)
+            }
+        ];
+    }
+
+    return Object.keys(menuOptions).map((key, id) => {
+        return {
+            title: key,
+            rows: buildListOptions(menuOptions[key], id)
+        }
+    });
+}
+
+function buildListOptions(options, section_id = 1) {
+    return options.map((option, idx) => {
+        return {
+            id: `id:${section_id}.${idx}`,
+            ...buildListRowTitle(option)
+        };
+    })
+}
+
+function buildListRowTitle(options) {
+    const split_option = options.split('\n');
+    const description = (split_option.length > 1) ? { description: split_option[1] } : "";
+    return {
+        title: split_option[0],
+        ...description
+    };
+}
+
 function normalizeProps(props) {
     let menuText = normalizeMenuText(props);
     let menuOptions = normalizeMenuOptions(props);
+    let menuHeader = normalizeMenuHeader(props);
+    let menuFooter = normalizeMenuFooter(props);
+    let menuButton = normalizeMenuButton(props);
 
     props.menuFields.text = menuText;
     props.menuFields.options = menuOptions;
+    props.menuFields.header = menuHeader;
+    props.menuFields.footer = menuFooter;
+    props.menuFields.textButton = menuButton;
+
     return props;
 }
 
@@ -233,6 +353,55 @@ function normalizeMenuText(props) {
         menuText = menuFields.text;
     }
     return menuText;
+}
+
+function normalizeMenuHeader(props) {
+    let { menuFields, userLanguage } = props;
+    let headerText;
+    if ( 
+        menuFields.header &&
+        menuFields.header[userLanguage]
+    ) {
+        headerText = menuFields.header[userLanguage];
+    } else if (typeof menuFields.header === "string") {
+        headerText = menuFields.header;
+    } else {
+        headerText = null;
+    }
+    return headerText;
+}
+
+function normalizeMenuFooter(props) {
+    let { menuFields, userLanguage } = props;
+    let footerText;
+    if (
+        menuFields.footer &&
+        menuFields.footer[userLanguage]
+    ) {
+        footerText = menuFields.footer[userLanguage];
+    } else if (typeof menuFields.footer === "string") {
+        footerText = menuFields.footer;
+    } else {
+        footerText = null;
+    }
+    return footerText;
+}
+
+function normalizeMenuButton(props) {
+    const DEFAULT_BUTTON = "Options";
+    let { menuFields, userLanguage } = props;
+    let buttonText;
+    if (
+        menuFields.button &&
+        menuFields.button[userLanguage]
+    ) {
+        buttonText = menuFields.button[userLanguage];
+    } else if (typeof menuFields.button === "string") {
+        buttonText = menuFields.button;
+    } else {
+        buttonText = DEFAULT_BUTTON;
+    }
+    return buttonText;
 }
 
 function normalizeMenuOptions(props) {
