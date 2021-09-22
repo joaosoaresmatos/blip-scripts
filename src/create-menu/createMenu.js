@@ -132,8 +132,8 @@ function createMenu(
             menu.type = 'application/json';
         } else if (
             userChannel === 'whatsapp' &&
-            (menuFields.options.length < 11 || validateOptionsToWhatsappListMenu(props))&&
-            config.hasWppListMenu
+            config.hasWppListMenu &&
+            (menuFields.options.length < 11 || validateOptionsToWhatsappListMenu(props))
         ) {
             menu.content = getWppListMenu(props, config);
             menu.type = 'application/json';
@@ -243,28 +243,28 @@ function getTextMenu(props, config) {
     return textMenu;
 }
 
-function getInteractiveMenu(props, type, action) {
+function getInteractiveMenu(menuFields, type, action) {
     return {
         recipient_type: "individual",
         type: "interactive",
         interactive: {
             type: type,
-            ...buildHeader(props),
+            ...buildHeader(menuFields),
             body: {
-                text: props.text,
+                text: menuFields.text,
             },
-            ...buildFooter(props),
+            ...buildFooter(menuFields),
             action: action
         }
     }
 }
 
-function buildHeader(props) {
-    return (!props.header) ? {} : { header: { type: "text", text: props.header } };
+function buildHeader(menuFields) {
+    return (!menuFields.header) ? {} : { header: { type: "text", text: menuFields.header } };
 }
 
-function buildFooter(props) {
-    return (!props.footer) ? {} : { footer: { text: props.header } };
+function buildFooter(menuFields) {
+    return (!menuFields.footer) ? {} : { footer: { text: menuFields.header } };
 }
 
 function validateOptionsToWhatsappListMenu(props) {
@@ -281,19 +281,19 @@ function validateOptionsToWhatsappListMenu(props) {
 
 }
 
-function buildSections(props) {
-    if (Array.isArray(props)) {
+function buildSections(menuOptions) {
+    if (Array.isArray(menuOptions)) {
         return [
             {
-                rows: buildListOptions(props)
+                rows: buildListOptions(menuOptions)
             }
         ];
     }
 
-    return Object.keys(props).map((key, id) => {
+    return Object.keys(menuOptions).map((key, id) => {
         return {
             title: key,
-            rows: buildListOptions(props[key], id)
+            rows: buildListOptions(menuOptions[key], id)
         }
     });
 }
@@ -358,7 +358,8 @@ function normalizeMenuText(props) {
 function normalizeMenuHeader(props) {
     let { menuFields, userLanguage } = props;
     let headerText;
-    if (
+    if ( 
+        menuFields.header &&
         menuFields.header[userLanguage]
     ) {
         headerText = menuFields.header[userLanguage];
@@ -374,6 +375,7 @@ function normalizeMenuFooter(props) {
     let { menuFields, userLanguage } = props;
     let footerText;
     if (
+        menuFields.footer &&
         menuFields.footer[userLanguage]
     ) {
         footerText = menuFields.footer[userLanguage];
@@ -390,6 +392,7 @@ function normalizeMenuButton(props) {
     let { menuFields, userLanguage } = props;
     let buttonText;
     if (
+        menuFields.button &&
         menuFields.button[userLanguage]
     ) {
         buttonText = menuFields.button[userLanguage];
