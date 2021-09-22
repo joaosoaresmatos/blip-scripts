@@ -95,7 +95,7 @@ function createMenu(
     {
         hasDefaultQuickReply = true,
         hasWppQuickReply = true,
-        hasWppListMenu = true,
+        hasWppListMenu = false,
         isBlipImmediateMenu = true,
         orderOptions = 'asc'
     } = {}
