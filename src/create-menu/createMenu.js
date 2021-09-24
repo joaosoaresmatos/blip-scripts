@@ -42,27 +42,28 @@ function getMenu(userChannel, channelBoldTags) {
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
             'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
         },
-        /*options: { //This option structure allows you to create a menu separated by sessions in Whatsapp (Only). Maximum of 10 sessions and 10 options (regardless of the number of sessions) 
+        /* options: { //This option structure allows you to create a menu separated by sessions in Whatsapp (Only). Maximum of 10 sessions and 10 options (regardless of the number of sessions) 
             'en-US': {
-                "Sessão 1": ['Option 1', 'Option 2', 'Option 3'],
-                "Sess]ao 2": ['Option 4', 'Option 5', 'Option 6']
+                "Sessão 1": ['Option 1', 'Option 2'],
+                "Sessão 2": ['Option 3']
             },
             'pt-BR': {
-                "Sessão 1": ['Option 1', 'Option 2', 'Option 3'],
-                "Sessão 2": ['Option 4', 'Option 5', 'Option 6']
+                "Sessão 1": ['Option 1', 'Option 2'],
+                "Sessão 2": ['Option 3']
             }
-        },*/
-        header: { //Optional (Only used in list-type Whatsapp menu)
+        }, */
+        /* header: { //Optional (Only used in Whatsapp menu)
             'en-US': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters",
             'pt-BR': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters"
-        },
-        footer: { //Optional (Only used in list-type Whatsapp menu)
+        }, */
+        /* footer: { //Optional (Only used in Whatsapp menu)
             'en-US': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters",
             'pt-BR': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters"
-        },
-        button: { //Required if list type Whatsapp menu
-            'en-US': "This is a text of menu button in Whatsapp channel",
-            'pt-BR': "This is a text of menu button in Whatsapp channel"
+        }, */
+        button: {
+            // Required if list type Whatsapp menu
+            'en-US': 'This is a text of menu button in Whatsapp channel',
+            'pt-BR': 'This is a text of menu button in Whatsapp channel'
         }
     };
     let props = {
@@ -73,8 +74,8 @@ function getMenu(userChannel, channelBoldTags) {
     };
     let config = {
         hasDefaultQuickReply: false,
-        hasWppQuickReply: false,
-        hasWppListMenu: true,
+        hasWppQuickReply: true,
+        hasWppListMenu: false,
         isBlipImmediateMenu: false,
         orderOptions: 'desc'
     };
@@ -125,15 +126,15 @@ function createMenu(
             menu.type = 'application/vnd.lime.select+json';
         } else if (
             userChannel === 'whatsapp' &&
-            menuFields.options.length < 4 &&
-            config.hasWppQuickReply
+            config.hasWppQuickReply &&
+            validateOptionsToWhatsappMenu(props, 4)
         ) {
             menu.content = getWppQuickReply(props, config);
             menu.type = 'application/json';
         } else if (
             userChannel === 'whatsapp' &&
             config.hasWppListMenu &&
-            (menuFields.options.length < 11 || validateOptionsToWhatsappListMenu(props))
+            validateOptionsToWhatsappMenu(props, 11)
         ) {
             menu.content = getWppListMenu(props, config);
             menu.type = 'application/json';
@@ -178,34 +179,10 @@ function getQuickReply(props, config) {
 }
 
 function getWppQuickReply(props, config) {
-    let { menuFields } = props;
-    let menuText = menuFields.text;
-    let menuOptions = menuFields.options;
-    let quickReplyOptions = [];
-    if (menuOptions) {
-        for (let i = 0; i < menuOptions.length; i++) {
-            quickReplyOptions.push({
-                type: 'reply',
-                reply: {
-                    id: menuOptions[i],
-                    title: menuOptions[i]
-                }
-            });
-        }
-    }
-    let quickReplyContent = {
-        type: 'interactive',
-        interactive: {
-            type: 'button',
-            body: {
-                text: menuText
-            },
-            action: {
-                buttons: quickReplyOptions
-            }
-        }
+    const action = {
+        buttons: buildQuickReplyOptions(props.menuFields.options)
     };
-    return quickReplyContent;
+    return getInteractiveMenu(props.menuFields, 'button', action);
 }
 
 function getWppListMenu(props) {
@@ -213,7 +190,7 @@ function getWppListMenu(props) {
         button: props.menuFields.textButton,
         sections: buildSections(props.menuFields.options)
     };
-    return getInteractiveMenu(props.menuFields, "list", action);
+    return getInteractiveMenu(props.menuFields, 'list', action);
 }
 
 function getTextMenu(props, config) {
@@ -245,40 +222,81 @@ function getTextMenu(props, config) {
 
 function getInteractiveMenu(menuFields, type, action) {
     return {
-        recipient_type: "individual",
-        type: "interactive",
+        recipient_type: 'individual',
+        type: 'interactive',
         interactive: {
-            type: type,
+            type,
             ...buildHeader(menuFields),
             body: {
-                text: menuFields.text,
+                text: menuFields.text
             },
             ...buildFooter(menuFields),
-            action: action
+            action
+        }
+    };
+}
+
+function buildQuickReplyOptions(menuOptions) {
+    let optionsArray = [];
+
+    if (menuOptions && typeof menuOptions === 'object') {
+        try {
+            const options = Object.keys(menuOptions);
+            for (let i = 0; i < options.length; i++) {
+                optionsArray = optionsArray.concat(menuOptions[options[i]]);
+            }
+        } catch (error) {
+            return [];
         }
     }
+
+    menuOptions = optionsArray;
+
+    let quickReplyOptions = [];
+
+    if (menuOptions && Array.isArray(menuOptions)) {
+        for (let i = 0; i < menuOptions.length; i++) {
+            quickReplyOptions.push({
+                type: 'reply',
+                reply: {
+                    id: menuOptions[i],
+                    title: menuOptions[i]
+                }
+            });
+        }
+    }
+
+    return quickReplyOptions;
 }
 
 function buildHeader(menuFields) {
-    return (!menuFields.header) ? {} : { header: { type: "text", text: menuFields.header } };
+    return !menuFields.header
+        ? {}
+        : { header: { type: 'text', text: menuFields.header } };
 }
 
 function buildFooter(menuFields) {
-    return (!menuFields.footer) ? {} : { footer: { text: menuFields.header } };
+    return !menuFields.footer ? {} : { footer: { text: menuFields.footer } };
 }
 
-function validateOptionsToWhatsappListMenu(props) {
-    try {
-        const options = Object.keys(props.menuFields.options);
-        let optionsCount = 0;
-        for (let i = 0; i < options.length; i++) {
-            optionsCount = optionsCount + props.menuFields.options[options[i]].length;
+function validateOptionsToWhatsappMenu(props, maxNumberOfOptions) {
+    if (Array.isArray(props.menuFields.options)) {
+        return props.menuFields.options.length < maxNumberOfOptions;
+    }
+    if (typeof props === 'object') {
+        try {
+            const options = Object.keys(props.menuFields.options);
+            let optionsCount = 0;
+            for (let i = 0; i < options.length; i++) {
+                optionsCount += props.menuFields.options[options[i]].length;
+            }
+            return optionsCount < maxNumberOfOptions;
+        } catch (error) {
+            return false;
         }
-        return optionsCount < 11 ? true : false;
-    } catch (error) {
+    } else {
         return false;
     }
-
 }
 
 function buildSections(menuOptions) {
@@ -290,26 +308,23 @@ function buildSections(menuOptions) {
         ];
     }
 
-    return Object.keys(menuOptions).map((key, id) => {
-        return {
-            title: key,
-            rows: buildListOptions(menuOptions[key], id)
-        }
-    });
+    return Object.keys(menuOptions).map((key, id) => ({
+        title: key,
+        rows: buildListOptions(menuOptions[key], id)
+    }));
 }
 
 function buildListOptions(options, section_id = 1) {
-    return options.map((option, idx) => {
-        return {
-            id: `id:${section_id}.${idx}`,
-            ...buildListRowTitle(option)
-        };
-    })
+    return options.map((option, idx) => ({
+        id: `id:${section_id}.${idx}`,
+        ...buildListRowTitle(option)
+    }));
 }
 
 function buildListRowTitle(options) {
     const split_option = options.split('\n');
-    const description = (split_option.length > 1) ? { description: split_option[1] } : "";
+    const description =
+        split_option.length > 1 ? { description: split_option[1] } : '';
     return {
         title: split_option[0],
         ...description
@@ -358,12 +373,9 @@ function normalizeMenuText(props) {
 function normalizeMenuHeader(props) {
     let { menuFields, userLanguage } = props;
     let headerText;
-    if ( 
-        menuFields.header &&
-        menuFields.header[userLanguage]
-    ) {
+    if (menuFields.header && menuFields.header[userLanguage]) {
         headerText = menuFields.header[userLanguage];
-    } else if (typeof menuFields.header === "string") {
+    } else if (typeof menuFields.header === 'string') {
         headerText = menuFields.header;
     } else {
         headerText = null;
@@ -374,12 +386,9 @@ function normalizeMenuHeader(props) {
 function normalizeMenuFooter(props) {
     let { menuFields, userLanguage } = props;
     let footerText;
-    if (
-        menuFields.footer &&
-        menuFields.footer[userLanguage]
-    ) {
+    if (menuFields.footer && menuFields.footer[userLanguage]) {
         footerText = menuFields.footer[userLanguage];
-    } else if (typeof menuFields.footer === "string") {
+    } else if (typeof menuFields.footer === 'string') {
         footerText = menuFields.footer;
     } else {
         footerText = null;
@@ -388,15 +397,12 @@ function normalizeMenuFooter(props) {
 }
 
 function normalizeMenuButton(props) {
-    const DEFAULT_BUTTON = "Options";
+    const DEFAULT_BUTTON = 'Options';
     let { menuFields, userLanguage } = props;
     let buttonText;
-    if (
-        menuFields.button &&
-        menuFields.button[userLanguage]
-    ) {
+    if (menuFields.button && menuFields.button[userLanguage]) {
         buttonText = menuFields.button[userLanguage];
-    } else if (typeof menuFields.button === "string") {
+    } else if (typeof menuFields.button === 'string') {
         buttonText = menuFields.button;
     } else {
         buttonText = DEFAULT_BUTTON;
