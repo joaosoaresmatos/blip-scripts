@@ -8,7 +8,8 @@ let userChannel = 'whatsapp';
 console.log('-------------');
 console.log(JSON.stringify(run(userChannel, channelBoldTags)));
 console.log('-------------');
-console.log(run(userChannel, channelBoldTags));
+const result = run(userChannel, channelBoldTags);
+console.log(result);
 console.log('-------------');
 
 // Code of builder here
@@ -39,27 +40,34 @@ function getMenu(userChannel, channelBoldTags) {
             }
         },
         options: {
+            // For break a line between options, add a '\n' in beginning of option text. Its works only in text menu.
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
-            'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
+            'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3', 'Opção 4', '\nOpção 5']
         },
-        /* options: { //This option structure allows you to create a menu separated by sessions in Whatsapp (Only). Maximum of 10 sessions and 10 options (regardless of the number of sessions) 
+        /* options: { //This option structure allows you to create a menu separated by sessions (For Whatsapp-list and text menus, only). For Whatsapp list menu, it's has a maximum of 10 options (regardless of the number of sessions) 
             'en-US': {
                 "Sessão 1": ['Option 1', 'Option 2'],
                 "Sessão 2": ['Option 3']
             },
             'pt-BR': {
-                "Sessão 1": ['Option 1', 'Option 2'],
-                "Sessão 2": ['Option 3']
+                "Sessão 1": ['Option 1', 'Option 2', 'Option 3', 'Option 4', 'Option 5'],
+                "Sessão 2": ['Option 6', 'Option 7', 'Option 8']
             }
         }, */
-        /* header: { //Optional (Only used in Whatsapp menu)
-            'en-US': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters",
-            'pt-BR': "This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. It's should have in max 60 characters"
-        }, */
-        /* footer: { //Optional (Only used in Whatsapp menu)
-            'en-US': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters",
-            'pt-BR': "This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. It's should have in max 60 characters"
-        }, */
+        header: {
+            // Optional. It works in Whatsapp-list and textMenu only
+            'en-US':
+                'This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. Its should have in max 60 characters',
+            'pt-BR':
+                'This is a text to describe the menu (in the top) that will be generated to Whatsapp channel. Its should have in max 60 characters'
+        },
+        footer: {
+            // Optional. It works in Whatsapp-list and textMenu only
+            'en-US':
+                'This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. Its should have in max 60 characters',
+            'pt-BR':
+                'This is a text to describe the menu (in the bottom) that will be generated to Whatsapp channel. Its should have in max 60 characters'
+        },
         button: {
             // Required if list type Whatsapp menu
             'en-US': 'This is a text of menu button in Whatsapp channel',
@@ -74,7 +82,7 @@ function getMenu(userChannel, channelBoldTags) {
     };
     let config = {
         hasDefaultQuickReply: false,
-        hasWppQuickReply: true,
+        hasWppQuickReply: false,
         hasWppListMenu: false,
         isBlipImmediateMenu: false,
         orderOptions: 'desc'
@@ -117,7 +125,7 @@ function createMenu(
     let menu = {};
     try {
         props = normalizeProps(props);
-        let { userChannel, menuFields } = props;
+        let { userChannel } = props;
         if (
             config.hasDefaultQuickReply &&
             (userChannel === 'blipchat' || userChannel === 'facebook')
@@ -147,7 +155,6 @@ function createMenu(
         menu.content = {
             text: `Something went wrong while generating menu. Please, visit https://github.com/joaosoaresmatos/blip-scripts/blob/main/README.md to read more about it.\n\nDescription:\n\n${exception}`
         };
-
         throw exception;
     } finally {
         return menu;
@@ -194,30 +201,122 @@ function getWppListMenu(props) {
 }
 
 function getTextMenu(props, config) {
-    let { channelBoldTags, menuFields } = props;
-    let menuText = menuFields.text;
+    let { menuFields } = props;
+    let menuHeader = menuFields.header ? `${menuFields.header}\n\n` : '';
+    let menuFooter = menuFields.footer ? `\n\n${menuFields.footer}` : '';
+    let menuText = `${menuHeader}${menuFields.text}\n`;
+    menuText += buildMenuTextOptions(props, config);
+    menuText += menuFooter;
+    let textMenu = { text: menuText };
+    return textMenu;
+}
+
+function buildMenuTextOptions(props, config) {
+    let { menuFields } = props;
     let menuOptions = menuFields.options;
-    if (menuFields.enableOptions !== false) {
+    if (menuOptions && Array.isArray(menuOptions)) {
+        return buildMenuTextOptionsWhenIsArray(props, config);
+    }
+    if (menuOptions && typeof menuOptions === 'object') {
+        return buildMenuTextOptionsWhenIsObject(props, config);
+    }
+}
+
+function buildMenuTextOptionsWhenIsArray(props, config) {
+    let { channelBoldTags, menuFields } = props;
+    let menuOptions = menuFields.options;
+    let menuText = '';
+    if (props.enableOptions !== false) {
         let totalItens = parseInt(menuOptions.length);
         if (config.orderOptions === 'desc') {
             start = totalItens - 1;
             for (let i = start, j = 0; i >= 0; i--, j++) {
-                menuText += `\n${channelBoldTags.open}${i + 1}${
-                    channelBoldTags.close
-                }. ${menuOptions[j]}`;
+                if (menuOptions[j][0] === '\n') {
+                    menuOptions[j] = menuOptions[j].replace('\n', '');
+                    menuText += `\n\n${channelBoldTags.open}${i + 1}${
+                        channelBoldTags.close
+                    }. ${menuOptions[j]}`;
+                } else {
+                    menuText += `\n${channelBoldTags.open}${i + 1}${
+                        channelBoldTags.close
+                    }. ${menuOptions[j]}`;
+                }
             }
         } else {
             for (let i = 0; i < totalItens; i++) {
                 let option = i + 1;
-                if (menuFields.isSurvey) {
+                if (props.isSurvey) {
                     option = totalItens - i;
                 }
-                menuText += `\n${channelBoldTags.open}${option}${channelBoldTags.close}. ${menuOptions[i]}`;
+                if (menuOptions[i][0] === '\n') {
+                    menuOptions[i] = menuOptions[i].replace('\n', '');
+                    menuText += `\n\n${channelBoldTags.open}${option}${channelBoldTags.close}. ${menuOptions[i]}`;
+                } else {
+                    menuText += `\n${channelBoldTags.open}${option}${channelBoldTags.close}. ${menuOptions[i]}`;
+                }
             }
         }
     }
-    let textMenu = { text: menuText };
-    return textMenu;
+    return menuText;
+}
+
+function buildMenuTextOptionsWhenIsObject(props, config) {
+    let { channelBoldTags, menuFields } = props;
+    let menuOptions = menuFields.options;
+    let menuText = '';
+    try {
+        const sections = Object.keys(menuOptions);
+        let totalItens = getNumberOfOptions(menuOptions);
+        if (config.orderOptions === 'desc') {
+            start = totalItens - 1;
+            let i = start;
+            for (let k = 0; k < sections.length; k++) {
+                menuText += sections[k] ? `\n${sections[k]}\n` : '\n';
+                for (let j = 0; j < menuOptions[sections[k]].length; i--, j++) {
+                    if (menuOptions[sections[k]][j][0] === '\n') {
+                        menuOptions[sections[k]][j] = menuOptions[sections[k]][
+                            j
+                        ].replace('\n', '');
+                        menuText += `\n\n${channelBoldTags.open}${i + 1}${
+                            channelBoldTags.close
+                        }. ${menuOptions[sections[k]][j]}`;
+                    } else {
+                        menuText += `\n${channelBoldTags.open}${i + 1}${
+                            channelBoldTags.close
+                        }. ${menuOptions[sections[k]][j]}`;
+                    }
+                }
+                menuText += k < sections.length - 1 ? '\n' : '';
+            }
+        } else {
+            let i = 1;
+            for (let k = 0; k < sections.length; k++) {
+                menuText += sections[k] ? `\n${sections[k]}\n` : '\n';
+                for (let j = 0; j < menuOptions[sections[k]].length; j++, i++) {
+                    let option = i;
+                    if (menuFields.isSurvey) {
+                        option = totalItens - i;
+                    }
+                    if (menuOptions[sections[k]][j][0] === '\n') {
+                        menuOptions[sections[k]][j] = menuOptions[sections[k]][
+                            j
+                        ].replace('\n', '');
+                        menuText += `\n\n${channelBoldTags.open}${option}${
+                            channelBoldTags.close
+                        }. ${menuOptions[sections[k]][j]}`;
+                    } else {
+                        menuText += `\n${channelBoldTags.open}${option}${
+                            channelBoldTags.close
+                        }. ${menuOptions[sections[k]][j]}`;
+                    }
+                }
+                menuText += k < sections.length - 1 ? '\n' : '';
+            }
+        }
+    } catch (error) {
+        return '';
+    }
+    return menuText;
 }
 
 function getInteractiveMenu(menuFields, type, action) {
@@ -296,6 +395,23 @@ function validateOptionsToWhatsappMenu(props, maxNumberOfOptions) {
         }
     } else {
         return false;
+    }
+}
+
+function getNumberOfOptions(menuOptions) {
+    if (typeof menuOptions === 'object') {
+        try {
+            const options = Object.keys(menuOptions);
+            let optionsCount = 0;
+            for (let i = 0; i < options.length; i++) {
+                optionsCount += menuOptions[options[i]].length;
+            }
+            return optionsCount;
+        } catch (error) {
+            return 0;
+        }
+    } else {
+        return 0;
     }
 }
 
