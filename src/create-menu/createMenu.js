@@ -70,8 +70,10 @@ function getMenu(userChannel, channelBoldTags) {
         },
         button: {
             // Required if list type Whatsapp menu
-            'en-US': 'This is a text of menu button in Whatsapp channel',
-            'pt-BR': 'This is a text of menu button in Whatsapp channel'
+            'en-US':
+                'This is a text of menu button in Whatsapp channel. Its should have in max 20 characters',
+            'pt-BR':
+                'This is a text of menu button in Whatsapp channel. Its should have in max 20 characters'
         }
     };
     let props = {
@@ -315,8 +317,9 @@ function buildMenuTextOptionsWhenIsObject(props, config) {
         }
     } catch (error) {
         return '';
+    } finally {
+        return menuText;
     }
-    return menuText;
 }
 
 function getInteractiveMenu(menuFields, type, action) {
@@ -399,19 +402,16 @@ function validateOptionsToWhatsappMenu(props, maxNumberOfOptions) {
 }
 
 function getNumberOfOptions(menuOptions) {
-    if (typeof menuOptions === 'object') {
-        try {
+    let optionsCount = 0;
+    try {
+        if (typeof menuOptions === 'object') {
             const options = Object.keys(menuOptions);
-            let optionsCount = 0;
             for (let i = 0; i < options.length; i++) {
                 optionsCount += menuOptions[options[i]].length;
             }
-            return optionsCount;
-        } catch (error) {
-            return 0;
         }
-    } else {
-        return 0;
+    } finally {
+        return optionsCount;
     }
 }
 
