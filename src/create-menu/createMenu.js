@@ -42,7 +42,7 @@ function getMenu(userChannel, channelBoldTags) {
         options: {
             // For break a line between options, add a '\n' in beginning of option text. Its works only in text menu.
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
-            'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3', 'Opção 4', '\nOpção 5']
+            'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
         },
         /* options: { //This option structure allows you to create a menu separated by sessions (For Whatsapp-list and text menus, only). For Whatsapp list menu, it's has a maximum of 10 options (regardless of the number of sessions) 
             'en-US': {
@@ -84,8 +84,8 @@ function getMenu(userChannel, channelBoldTags) {
     };
     let config = {
         hasDefaultQuickReply: false,
-        hasWppQuickReply: false,
-        hasWppListMenu: false,
+        hasWppQuickReply: true,
+        hasWppListMenu: true,
         isBlipImmediateMenu: false,
         orderOptions: 'desc'
     };
@@ -372,6 +372,9 @@ function buildQuickReplyOptions(menuOptions) {
 }
 
 function buildHeader(menuFields) {
+    if (menuFields.header && typeof menuFields.header === 'object') {
+        return { header: { ...menuFields.header } };
+    }
     return !menuFields.header
         ? {}
         : { header: { type: 'text', text: menuFields.header } };
