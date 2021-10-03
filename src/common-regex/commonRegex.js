@@ -27,4 +27,24 @@ const commonRegex = [
         regex: /\b^([a-z]{3}(-?|\s?)[0-9]{4}|[a-z]{3}[0-9][a-z][0-9]{2})$\b/,
         value: 'Car plate'
     }
-];
+]
+
+ // //begin name logic
+ if (selectedMenuOption.value === 'Nome valido') {
+    selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
+    selectedMenuOption.inputMatchClean = capitalizeAll(
+        selectedMenuOption.inputMatchClean
+    );
+}
+// end name logic
+// //begin phone logic
+if (selectedMenuOption.value === 'Telefone') {
+    selectedMenuOption.inputMatch = removeWhiteSpace(
+        selectedMenuOption.inputMatch
+    );
+    selectedMenuOption.inputMatchClean = removeWhiteSpace(
+        selectedMenuOption.inputMatchClean
+    );
+}
+// end phone logic
+;

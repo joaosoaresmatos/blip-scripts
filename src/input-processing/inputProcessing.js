@@ -1,6 +1,6 @@
 // Assert [REQUIREMENTS] variables.
 
-let testInput = 'menu';
+let testInput = '2';
 console.log(run(testInput, 'text/plain'));
 
 // Code of builder here
@@ -11,56 +11,35 @@ function run(inputContent, inputType) {
 
 function getSelectedMenuOption(inputContent, inputType) {
     let inputContentOriginal = inputContent;
-    let optionsRegex = [];
-    optionsRegex.push(
+    let options = [];
+    options.push(
         {
-            regex: /\b((n+((a)+o+))|^n+$)\b/,
-            value: 'Não'
+            regex: {
+                'en-US': /^((your)\s(regex)\s(here))$/,
+                'pt-BR': /^((seu)\s(regex)\s(aqui))$/
+            },
+            value: 'first'
         },
         {
-            regex: /\b((s+(i+(m|n)+))|^s+$)\b/,
-            value: 'Sim'
+            regex: {
+                'en-US': /^((your)\s(regex2)\s(here))$/,
+                'pt-BR': /^((seu)\s(regex2)\s(aqui))$/
+            },
+            value: 'second'
         },
         {
-            regex: /^(((falar\scom)|ir\spara)?\s?aten(dentes?|dimentos?)\s?(real|humanos?)?)$/,
-            value: 'Atendimento'
-        },
-        {
-            regex: /\b((tentar)|(denovo|novamente))\b/,
-            value: 'Tentar novamente'
-        },
-        {
-            regex: /\b(menu)\b/,
-            value: 'Menu'
-        },
-        {
-            regex: /\b(estao?|corret(a|o)s?)\b/,
-            value: 'Estão corretas!'
-        },
-        {
-            regex: /\b(reclamac(ao|oes))\b/,
-            value: 'Reclamação'
-        },
-        // Phone Validation | Valid Examples: +5531999999999, (31)999999999
-        {
-            regex: /\b(?:(?:\+|00)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})-?(\d{4}))\b/,
-            value: 'Phone number'
-        },
-        // Email Validation | Valid Examples: name.optional@domain.com
-        {
-            regex: /^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/,
-            value: 'Email valido'
-        },
-        // Name Validation | Valid Examples: joao soares, joão soares, joAO sOares.!!
-        {
-            regex: /^(([A-Za-z]+)?[A-Za-z]{2}(\s+([A-Za-z]+)?[A-Za-z]{2})+)$/,
-            value: 'Nome valido'
+            regex: {
+                'en-US': /^((your)\s(regex3)\s(here))$/,
+                'pt-BR': /^((seu)\s(regex3)\s(aqui))$/
+            },
+            value: 'third'
         }
     );
     let props = {
         input: inputContent,
-        optionsRegex,
-        inputType
+        inputType,
+        options,
+        userLanguage: 'en-US'
     };
     let config = {
         isNumberMenu: true,
@@ -69,24 +48,7 @@ function getSelectedMenuOption(inputContent, inputType) {
         shouldRemoveWhiteSpaces: false
     };
     let selectedMenuOption = validateInputOptions(props, config);
-    // //begin name logic
-    if (selectedMenuOption.value === 'Nome valido') {
-        selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
-        selectedMenuOption.inputMatchClean = capitalizeAll(
-            selectedMenuOption.inputMatchClean
-        );
-    }
-    // end name logic
-    // //begin phone logic
-    if (selectedMenuOption.value === 'Telefone') {
-        selectedMenuOption.inputMatch = removeWhiteSpace(
-            selectedMenuOption.inputMatch
-        );
-        selectedMenuOption.inputMatchClean = removeWhiteSpace(
-            selectedMenuOption.inputMatchClean
-        );
-    }
-    // end phone logic
+
     return selectedMenuOption;
 }
 
@@ -94,7 +56,12 @@ function getSelectedMenuOption(inputContent, inputType) {
 // It should be put in the router resources in order to be used by the above script
 
 function validateInputOptions(
-    { input = null, optionsRegex = null, inputType = null } = {},
+    {
+        input = null,
+        inputType = null,
+        options = null,
+        userLanguage = null
+    } = {},
     {
         isNumberMenu = false,
         isReversed = false,
@@ -102,6 +69,12 @@ function validateInputOptions(
         shouldRemoveWhiteSpaces = true
     } = {}
 ) {
+    let props = {
+        input,
+        inputType,
+        options,
+        userLanguage
+    };
     let config = {
         isNumberMenu,
         isReversed,
@@ -120,7 +93,11 @@ function validateInputOptions(
     if (isInvalidType(inputType)) {
         return inputInfo;
     }
+
     try {
+        props = normalizeProps(props);
+        let { options, userLanguage } = props;
+
         input = config.shouldRemoveWhiteSpaces
             ? removeExcessWhiteSpace(input)
             : input;
@@ -128,16 +105,16 @@ function validateInputOptions(
             ? removeSpecialCharacters(input, config)
             : input;
 
-        for (let option in optionsRegex) {
-            let matching = new RegExp(optionsRegex[option].regex, 'gi');
+        for (let option in options) {
+            let matching = new RegExp(options[option].regex, 'gi');
             let numberOption = parseInt(option) + 1;
             let matchArray = null;
             if (config.isReversed) {
-                numberOption = optionsRegex.length - parseInt(option);
+                numberOption = options.length - parseInt(option);
             }
             if (config.isNumberMenu) {
                 let matchingNumber = new RegExp(
-                    getNumberWrittenRegex(numberOption),
+                    getNumberWrittenRegex(numberOption, userLanguage),
                     'gi'
                 );
                 matchArray = matchingNumber.exec(input);
@@ -153,12 +130,12 @@ function validateInputOptions(
                 matchArray = matching.exec(inputCleaned);
             }
             if (matchArray) {
-                inputInfo.value = optionsRegex[option].value;
-                if (optionsRegex[option].tracking) {
-                    inputInfo.tracking = optionsRegex[option].tracking;
+                inputInfo.value = options[option].value;
+                if (options[option].tracking) {
+                    inputInfo.tracking = options[option].tracking;
                 } else {
                     inputInfo.tracking = getCleanedInputToTracking(
-                        optionsRegex[option].value,
+                        options[option].value,
                         config
                     );
                 }
@@ -180,6 +157,27 @@ function validateInputOptions(
 function isInvalidType(inputType) {
     const validType = 'text/plain';
     return inputType !== validType;
+}
+
+function normalizeProps(props) {
+    let options = normalizeOptions(props);
+    props.options = options;
+    return props;
+}
+
+function normalizeOptions(props) {
+    let { options, userLanguage } = props;
+
+    return options.map((option) => {
+        let obj = {};
+        if (option.regex[userLanguage]) {
+            obj.regex = option.regex[userLanguage];
+        } else {
+            obj.regex = option.regex;
+        }
+        obj.value = option.value;
+        return obj;
+    });
 }
 
 function capitalizeAll(text) {
@@ -263,24 +261,74 @@ function replaceSpecialLetters(input) {
     return input;
 }
 
-function getNumberWrittenRegex(number) {
+function getNumberWrittenRegex(number, userLanguage) {
     const numbersWrittenRegex = {
-        1: /^(((((opcao)|(numero))\s)?(um|1(\.0)?))|(primeir(a|o)(\sopcao)?))$/,
-        2: /^(((((opcao)|(numero))\s)?(dois|2(\.0)?))|(segund(a|o)(\sopcao)?))$/,
-        3: /^(((((opcao)|(numero))\s)?(tres|3(\.0)?))|(terceir(a|o)(\sopcao)?))$/,
-        4: /^(((((opcao)|(numero))\s)?(quatro|4(\.0)?))|(quart(a|o)(\sopcao)?))$/,
-        5: /^(((((opcao)|(numero))\s)?(cinco|5(\.0)?))|(quint(a|o)(\sopcao)?))$/,
-        6: /^(((((opcao)|(numero))\s)?(seis|6(\.0)?))|(sext(a|o)(\sopcao)?))$/,
-        7: /^(((((opcao)|(numero))\s)?(sete|7(\.0)?))|(setim(a|o)(\sopcao)?))$/,
-        8: /^(((((opcao)|(numero))\s)?(oito|8(\.0)?))|(oitav(a|o)(\sopcao)?))$/,
-        9: /^(((((opcao)|(numero))\s)?(nove|9(\.0)?))|(non(a|o)(\sopcao)?))$/,
-        10: /^(((((opcao)|(numero))\s)?(dez|10(\.0)?))|(decima(a|o)(\sopcao)?))$/,
-        11: /^(((((opcao)|(numero))\s)?(onze|11(\.0)?))|(decim(a|o)\s(primeir(a|o))(\sopcao)?))$/,
-        12: /^(((((opcao)|(numero))\s)?(doze|12(\.0)?))|(decim(a|o)\s(segund(a|o))(\sopcao)?))$/,
-        13: /^(((((opcao)|(numero))\s)?(treze|13(\.0)?))|(decim(a|o)\s(terceir(a|o))(\sopcao)?))$/,
-        14: /^(((((opcao)|(numero))\s)?(quartorze|14(\.0)?))|(decim(a|o)\s(quart(a|o))(\sopcao)?))$/,
-        15: /^(((((opcao)|(numero))\s)?(quinze|15(\.0)?))|(decim(a|o)\s(quint(a|o))(\sopcao)?))$/
+        1: {
+            'en-US':
+                /^(((((option)|(number))\s)?(one|1(\.0)?))|(first(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(um|1(\.0)?))|(primeir(a|o)(\sopcao)?))$/
+        },
+        2: {
+            'en-US':
+                /^(((((option)|(number))\s)?(two|2(\.0)?))|(second(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(dois|2(\.0)?))|(segund(a|o)(\sopcao)?))$/
+        },
+        3: {
+            'en-US':
+                /^(((((option)|(number))\s)?(three|3(\.0)?))|(third(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(tres|3(\.0)?))|(terceir(a|o)(\sopcao)?))$/
+        },
+        4: {
+            'en-US':
+                /^(((((option)|(number))\s)?(four|4(\.0)?))|(fourth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(quatro|4(\.0)?))|(quart(a|o)(\sopcao)?))$/
+        },
+        5: {
+            'en-US':
+                /^(((((option)|(number))\s)?(five|5(\.0)?))|(fifth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(cinco|5(\.0)?))|(quint(a|o)(\sopcao)?))$/
+        },
+        6: {
+            'en-US':
+                /^(((((option)|(number))\s)?(six|6(\.0)?))|(sixth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(seis|6(\.0)?))|(sext(a|o)(\sopcao)?))$/
+        },
+        7: {
+            'en-US':
+                /^(((((option)|(number))\s)?(seven|7(\.0)?))|(seventh(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(sete|7(\.0)?))|(setim(a|o)(\sopcao)?))$/
+        },
+        8: {
+            'en-US':
+                /^(((((option)|(number))\s)?(eight|8(\.0)?))|(eighth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(oito|8(\.0)?))|(oitav(a|o)(\sopcao)?))$/
+        },
+        9: {
+            'en-US':
+                /^(((((option)|(number))\s)?(nine|9(\.0)?))|(nineth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(nove|9(\.0)?))|(non(a|o)(\sopcao)?))$/
+        },
+        10: {
+            'en-US':
+                /^(((((option)|(number))\s)?(ten|10(\.0)?))|(tenth(\soption)?))$/,
+            'pt-BR':
+                /^(((((opcao)|(numero))\s)?(dez|10(\.0)?))|(decim(a|o)(\sopcao)?))$/
+        }
     };
+
+    if (userLanguage) {
+        return numbersWrittenRegex[`${number}`][userLanguage];
+    }
+
     return numbersWrittenRegex[`${number}`];
 }
 
