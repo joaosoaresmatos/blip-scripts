@@ -9,7 +9,7 @@ const commonRegex = [
     },
     // Phone Validation | Valid Examples: +5531999999999, (31)999999999
     {
-        regex: /\b(?:(?:\+|00)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})\-?(\d{4}))\b/,
+        regex: /\b(?:(?:\+|00)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})-?(\d{4}))\b/,
         value: 'Phone number'
     },
     // Email Validation | Valid Examples: name.optional@domain.com
@@ -27,10 +27,10 @@ const commonRegex = [
         regex: /\b^([a-z]{3}(-?|\s?)[0-9]{4}|[a-z]{3}[0-9][a-z][0-9]{2})$\b/,
         value: 'Car plate'
     }
-]
+];
 
- // //begin name logic
- if (selectedMenuOption.value === 'Nome valido') {
+// //begin name logic
+if (selectedMenuOption.value === 'Nome valido') {
     selectedMenuOption.inputMatch = capitalizeAll(inputContentOriginal);
     selectedMenuOption.inputMatchClean = capitalizeAll(
         selectedMenuOption.inputMatchClean
@@ -47,4 +47,3 @@ if (selectedMenuOption.value === 'Telefone') {
     );
 }
 // end phone logic
-;

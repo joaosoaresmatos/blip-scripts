@@ -1,45 +1,43 @@
 // Assert [REQUIREMENTS] variables.
 
-let testInput = '2';
-console.log(run(testInput, 'text/plain'));
+let testInput = 'apple';
+console.log(run(testInput, 'text/plain', 'en-US'));
 
 // Code of builder here
 
-function run(inputContent, inputType) {
-    return getSelectedMenuOption(inputContent, inputType);
+function run(inputContent, inputType, userLanguage) {
+    return getSelectedMenuOption(inputContent, inputType, userLanguage);
 }
 
-function getSelectedMenuOption(inputContent, inputType) {
-    let inputContentOriginal = inputContent;
-    let options = [];
-    options.push(
+function getSelectedMenuOption(inputContent, inputType, userLanguage) {
+    let options = [
         {
             regex: {
-                'en-US': /^((your)\s(regex)\s(here))$/,
-                'pt-BR': /^((seu)\s(regex)\s(aqui))$/
+                'en-US': /^(apple)$/,
+                'pt-BR': /^(maça)$/
             },
-            value: 'first'
+            value: 'apple'
         },
         {
             regex: {
-                'en-US': /^((your)\s(regex2)\s(here))$/,
-                'pt-BR': /^((seu)\s(regex2)\s(aqui))$/
+                'en-US': /^(pineapple)$/,
+                'pt-BR': /^(abacaxi)$/
             },
-            value: 'second'
+            value: 'pineapple'
         },
         {
             regex: {
-                'en-US': /^((your)\s(regex3)\s(here))$/,
-                'pt-BR': /^((seu)\s(regex3)\s(aqui))$/
+                'en-US': /^(strawberry)$/,
+                'pt-BR': /^(morango)$/
             },
-            value: 'third'
+            value: 'strawberry'
         }
-    );
+    ];
     let props = {
         input: inputContent,
         inputType,
         options,
-        userLanguage: 'en-US'
+        userLanguage
     };
     let config = {
         isNumberMenu: true,
@@ -60,7 +58,7 @@ function validateInputOptions(
         input = null,
         inputType = null,
         options = null,
-        userLanguage = null
+        userLanguage = 'en-US'
     } = {},
     {
         isNumberMenu = false,
@@ -325,11 +323,7 @@ function getNumberWrittenRegex(number, userLanguage) {
         }
     };
 
-    if (userLanguage) {
-        return numbersWrittenRegex[`${number}`][userLanguage];
-    }
-
-    return numbersWrittenRegex[`${number}`];
+    return numbersWrittenRegex[`${number}`][userLanguage];
 }
 
 function getCleanedInputToNlp(input) {
