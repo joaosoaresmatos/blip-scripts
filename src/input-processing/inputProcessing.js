@@ -58,7 +58,7 @@ function validateInputOptions(
         input = null,
         inputType = null,
         options = null,
-        userLanguage = 'en-US'
+        userLanguage = 'pt-BR'
     } = {},
     {
         isNumberMenu = false,
@@ -86,7 +86,8 @@ function validateInputOptions(
         value: UNEXPECTED_INPUT,
         tracking: UNEXPECTED_INPUT,
         inputMatch: UNEXPECTED_INPUT,
-        inputMatchClean: UNEXPECTED_INPUT
+        inputMatchClean: UNEXPECTED_INPUT,
+        chosenOptionNumber: UNEXPECTED_INPUT
     };
     if (isInvalidType(inputType)) {
         return inputInfo;
@@ -129,6 +130,7 @@ function validateInputOptions(
             }
             if (matchArray) {
                 inputInfo.value = options[option].value;
+                inputInfo.chosenOptionNumber = parseInt(option) + 1;
                 if (options[option].tracking) {
                     inputInfo.tracking = options[option].tracking;
                 } else {
