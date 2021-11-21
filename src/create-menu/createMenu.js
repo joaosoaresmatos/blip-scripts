@@ -44,7 +44,7 @@ function getMenu(userChannel, channelBoldTags) {
             'en-US': ['Option 1', 'Option 2', 'Option 3'],
             'pt-BR': ['Opção 1', 'Opção 2', 'Opção 3']
         },
-        /* options: { //This option structure allows you to create a menu separated by sessions (For Whatsapp-list and text menus, only). For Whatsapp list menu, it's has a maximum of 10 options (regardless of the number of sessions) 
+        /* options: { //This option structure allows you to create a menu separated by sessions (For Whatsapp-list and text menus, only). For Whatsapp list menu, it's has a maximum of 10 options (regardless of the number of sessions)
             'en-US': {
                 "Sessão 1": ['Option 1', 'Option 2'],
                 "Sessão 2": ['Option 3']
@@ -150,7 +150,11 @@ function createMenu(
             menu.type = 'application/json';
         } else {
             menu.content = getTextMenu(props, config);
-            menu.type = 'application/vnd.lime.select+json';
+            if (userChannel === 'facebook' || userChannel === 'gbm') {
+                menu.type = 'application/json';
+            } else {
+                menu.type = 'application/vnd.lime.select+json';
+            }
         }
     } catch (exception) {
         menu.type = 'application/vnd.lime.select+json';
@@ -494,11 +498,19 @@ function normalizeMenuHeader(props) {
     let headerText;
     if (menuFields.header && typeof menuFields.header === 'string') {
         headerText = menuFields.header;
-    } else if (menuFields.header && menuFields.header[userLanguage] && typeof menuFields.header[userLanguage] === 'string') {
+    } else if (
+        menuFields.header &&
+        menuFields.header[userLanguage] &&
+        typeof menuFields.header[userLanguage] === 'string'
+    ) {
         headerText = menuFields.header[userLanguage];
-    } else if (menuFields.header && menuFields.header[userLanguage] && userChannel === 'whatsapp') {
+    } else if (
+        menuFields.header &&
+        menuFields.header[userLanguage] &&
+        userChannel === 'whatsapp'
+    ) {
         headerText = menuFields.header[userLanguage];
-    } else if (menuFields.header && userChannel === 'whatsapp'){
+    } else if (menuFields.header && userChannel === 'whatsapp') {
         headerText = menuFields.header;
     } else {
         return;
