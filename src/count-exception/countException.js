@@ -11,8 +11,6 @@ function getCountException(countExceptionCurrent, lastStateWithInput) {
             countException = countExceptionCurrent;
             countException++;
         }
-    } catch (exception) {
-        throw exception;
     } finally {
         return countException;
     }
