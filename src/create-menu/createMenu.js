@@ -490,14 +490,18 @@ function normalizeMenuText(props) {
 }
 
 function normalizeMenuHeader(props) {
-    let { menuFields, userLanguage } = props;
+    let { menuFields, userLanguage, userChannel } = props;
     let headerText;
-    if (menuFields.header && menuFields.header[userLanguage]) {
+    if (menuFields.header && typeof menuFields.header === 'string') {
+        headerText = menuFields.header;
+    } else if (menuFields.header && menuFields.header[userLanguage] && typeof menuFields.header[userLanguage] === 'string') {
         headerText = menuFields.header[userLanguage];
-    } else if (typeof menuFields.header === 'string') {
+    } else if (menuFields.header && menuFields.header[userLanguage] && userChannel === 'whatsapp') {
+        headerText = menuFields.header[userLanguage];
+    } else if (menuFields.header && userChannel === 'whatsapp'){
         headerText = menuFields.header;
     } else {
-        headerText = null;
+        return;
     }
     return headerText;
 }
