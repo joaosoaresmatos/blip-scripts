@@ -18,7 +18,8 @@ function getUserChannel(contactIdentity) {
         'telegram.gw.msging.net': 'telegram',
         'workplace.gw.msging.net': 'workplace',
         'mailgun.gw.msging.net': 'email',
-        'pagseguro.gw.msging.net': 'pagseguro'
+        'pagseguro.gw.msging.net': 'pagseguro',
+        'googlercs.gw.msging.net': 'rcs'
     };
 
     let contactChannelId = contactIdentity.split('@')[CHANNEL_INDEX];
