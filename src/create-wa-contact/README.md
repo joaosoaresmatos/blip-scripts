@@ -1,6 +1,6 @@
 # createWaContact
 
-Build an WhatsApp contact according user Channel.
+Build an WhatsApp contact according userChannel.
 
 <br><br>
 
