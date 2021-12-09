@@ -1,8 +1,14 @@
 // Assert [REQUIREMENTS] variables.
 
-console.log(run('whatsapp', 'ptBr'));
-console.log(run('blipchat', 'ptBr'));
-console.log(run('blipchat', 'enUs'));
+console.log('\n__________________WA_____________________\n');
+console.log(JSON.stringify(run('whatsapp', 'ptBr')));
+console.log('\n');
+console.log(JSON.stringify(run('whatsapp', 'enUs')));
+console.log('\n__________________BC_____________________\n');
+console.log(JSON.stringify(run('blipchat', 'ptBr')));
+console.log('\n');
+console.log(JSON.stringify(run('blipchat', 'enUs')));
+console.log('\n_______________________________________\n');
 
 // Code of builder here
 
@@ -11,7 +17,11 @@ function run(userChannel, userLanguage = 'ptBr') {
 }
 
 function getWaContact(userChannel, userLanguage = 'ptBr') {
-    const contactName = 'Contact Name';
+    const contactName = {
+        ptBr: 'Nome do Contato',
+        enUs: 'Contact'
+    };
+
     const phoneNumber = '55123456789';
     const description = {
         ptBr: 'Maçã',
@@ -41,6 +51,14 @@ function createWaContact({
     } = {}) {
     let contactWebLink = {};
 
+    if (description instanceof Object) {
+        description = description[userLanguage];
+    }
+
+    if (contactName instanceof Object) {
+        contactName = contactName[userLanguage];
+    }
+
     if (userChannel === 'whatsapp') {
         contactWebLink.type = 'application/json';
         contactWebLink.content = _createWaTemplateContact(phoneNumber, contactName);
@@ -59,10 +77,6 @@ function createWaContact({
 }
 
 function _createWaContactWebLink(phoneNumber, name, description = null, userLanguage = 'ptBr') {
-    if (description instanceof Object) {
-        description = description[userLanguage];
-    }
-
     const contactWebLinkContent = {
         uri: `https://api.whatsapp.com/send?phone=${phoneNumber}`,
         target: "blank",
