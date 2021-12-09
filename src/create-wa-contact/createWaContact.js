@@ -85,7 +85,7 @@ function _createWaTemplateContact(phoneNumber, name) {
             name: {
                 first_name: nameSplited[0],
                 formatted_name: name,
-                last_name: nameSplited[nameSplited.length - 1] || '',
+                last_name: nameSplited.length > 1 ? nameSplited[nameSplited.length - 1] : '',
             },
             phones: [{
                 phone: `+${phoneNumber}`,
