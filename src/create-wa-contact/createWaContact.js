@@ -41,13 +41,13 @@ function createWaContact({
     } = {}) {
     let contactWebLink = {};
 
-    if (userChannel === "whatsapp") {
-        contactWebLink.type = "application/json";
+    if (userChannel === 'whatsapp') {
+        contactWebLink.type = 'application/json';
         contactWebLink.content = _createWaTemplateContact(phoneNumber, contactName);
         return contactWebLink;
     }
 
-    contactWebLink.type = "application/vnd.lime.web-link+json";
+    contactWebLink.type = 'application/vnd.lime.web-link+json';
     contactWebLink.content = _createWaContactWebLink(
         phoneNumber,
         contactName,
@@ -74,10 +74,10 @@ function _createWaContactWebLink(phoneNumber, name, description = null, userLang
 }
 
 function _createWaTemplateContact(phoneNumber, name) {
-    const CONTACT_TYPE = "contacts";
-    const PHONE_TYPE = "WORK";
+    const CONTACT_TYPE = 'contacts';
+    const PHONE_TYPE = 'WORK';
 
-    const nameSplited = name.split(" ");
+    const nameSplited = name.split(' ');
 
     return {
         type: CONTACT_TYPE,
@@ -85,7 +85,7 @@ function _createWaTemplateContact(phoneNumber, name) {
             name: {
                 first_name: nameSplited[0],
                 formatted_name: name,
-                last_name: nameSplited[nameSplited.length - 1] || "",
+                last_name: nameSplited[nameSplited.length - 1] || '',
             },
             phones: [{
                 phone: `+${phoneNumber}`,
