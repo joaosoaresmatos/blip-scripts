@@ -102,7 +102,7 @@ function _createWaTemplateContact(phoneNumber, name) {
                 last_name: nameSplited.length > 1 ? nameSplited[nameSplited.length - 1] : '',
             },
             phones: [{
-                phone: `+${phoneNumber}`,
+                phone: (phoneNumber.startsWith('+') ? '' : '+') + `${phoneNumber}`,
                 type: PHONE_TYPE,
                 wa_id: phoneNumber,
             }, ],
