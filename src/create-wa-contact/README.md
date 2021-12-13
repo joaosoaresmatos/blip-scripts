@@ -33,16 +33,16 @@ Example
 {{resource.createWaContact}}
 
 
-function run(userChannel, userLanguage = 'ptBr') {
+function run(userChannel, userLanguage = 'pt-Br') {
     return getWaContact(userChannel, userLanguage);
 }
 
-function getWaContact(userChannel, userLanguage = 'ptBr') {
+function getWaContact(userChannel, userLanguage = 'pt-Br') {
     const contactName = 'Contact Name';
     const phoneNumber = '55123456789';
     const description = {
-        ptBr: 'Maçã',
-        enUs: 'Apple'
+        'pt-Br': 'Maçã',
+        'en-Us': 'Apple'
     };
 
     const props = {
