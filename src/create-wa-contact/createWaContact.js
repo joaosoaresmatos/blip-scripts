@@ -1,31 +1,31 @@
 // Assert [REQUIREMENTS] variables.
 
 console.log('\n__________________WA_____________________\n');
-console.log(JSON.stringify(run('whatsapp', 'ptBr')));
+console.log(JSON.stringify(run('whatsapp', 'pt-Br')));
 console.log('\n');
-console.log(JSON.stringify(run('whatsapp', 'enUs')));
+console.log(JSON.stringify(run('whatsapp', 'en-Us')));
 console.log('\n__________________BC_____________________\n');
-console.log(JSON.stringify(run('blipchat', 'ptBr')));
+console.log(JSON.stringify(run('blipchat', 'pt-Br')));
 console.log('\n');
-console.log(JSON.stringify(run('blipchat', 'enUs')));
+console.log(JSON.stringify(run('blipchat', 'en-Us')));
 console.log('\n_______________________________________\n');
 
 // Code of builder here
 
-function run(userChannel, userLanguage = 'ptBr') {
+function run(userChannel, userLanguage = 'pt-Br') {
     return getWaContact(userChannel, userLanguage);
 }
 
-function getWaContact(userChannel, userLanguage = 'ptBr') {
+function getWaContact(userChannel, userLanguage = 'pt-Br') {
     const contactName = {
-        ptBr: 'Nome do Contato',
-        enUs: 'Contact'
+        'pt-Br': 'Nome do Contato',
+        'en-Us': 'Contact'
     };
 
     const phoneNumber = '55123456789';
     const description = {
-        ptBr: 'Maçã',
-        enUs: 'Apple'
+        'pt-Br': 'Maçã',
+        'en-Us': 'Apple'
     };
 
     const props = {
@@ -47,7 +47,7 @@ function createWaContact({
     contactName,
     phoneNumber,
     description = null,
-    userLanguage = 'ptBr'
+    userLanguage = 'pt-Br'
     } = {}) {
     let contactWebLink = {};
 
@@ -79,7 +79,7 @@ function createWaContact({
 function _createWaContactWebLink(phoneNumber, name, description = null, userLanguage = 'ptBr') {
     const contactWebLinkContent = {
         uri: `https://api.whatsapp.com/send?phone=${phoneNumber}`,
-        target: "blank",
+        target: 'blank',
         title: name,
         text: description,
     };
