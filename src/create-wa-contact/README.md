@@ -2,7 +2,7 @@
 
 Build an WhatsApp contact according userChannel.
 
-<br><br>
+<br>
 
 **WhatsApp**
 
@@ -12,8 +12,6 @@ Build an WhatsApp contact according userChannel.
 **Other Channels**
 
 ![waContact on BlipChat example](../../imgs/wa-contact-blipchat.png)
-
-<br><br>
 
 # How to Use
 
