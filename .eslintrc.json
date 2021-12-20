@@ -33,6 +33,10 @@
         "no-unsafe-finally": "off",
         "no-shadow": "off",
         "no-plusplus": "off",
-        "no-undef": "off"
+        "no-undef": "off",
+        "import/no-extraneous-dependencies": [
+            "error",
+            { "devDependencies": true }
+        ]
     }
 }
