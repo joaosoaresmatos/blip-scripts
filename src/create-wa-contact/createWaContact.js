@@ -1,14 +1,19 @@
 // Assert [REQUIREMENTS] variables.
+const colors = require('colors');
 
-console.log('\n__________________WA_____________________\n');
-console.log(JSON.stringify(run('whatsapp', 'pt-Br')));
-console.log('\n');
-console.log(JSON.stringify(run('whatsapp', 'en-Us')));
-console.log('\n__________________BC_____________________\n');
-console.log(JSON.stringify(run('blipchat', 'pt-Br')));
-console.log('\n');
-console.log(JSON.stringify(run('blipchat', 'en-Us')));
-console.log('\n_______________________________________\n');
+test('whatsapp', run('whatsapp', 'pt-Br'));
+test('whatsapp', run('whatsapp', 'en-Us'));
+test('blipchat', run('blipchat', 'pt-Br'));
+test('blipchat', run('blipchat', 'en-Us'));
+
+function test(channel, result) {
+    result = JSON.stringify(result);
+    const hrOutput = '\n\n################################################\n\n';
+    const channelOutput = `\n${'Channel'.yellow}: ${channel}`;
+    const resultOutput = `\n${'Result'.blue}: ${result}`;
+
+    console.log(hrOutput + channelOutput + resultOutput + hrOutput);
+}
 
 // Code of builder here
 
@@ -48,9 +53,40 @@ function createWaContact({
     phoneNumber,
     description = null,
     userLanguage = 'pt-Br'
-    } = {}) {
-    let contactWebLink = {};
+} = {}) {
+    const props = _normalizePros({
+        userChannel,
+        contactName,
+        phoneNumber,
+        description,
+        userLanguage
+    });
 
+    if (userChannel === 'whatsapp') {
+        const waTemplateContact = _createWaTemplateContact(
+            props.phoneNumber,
+            props.contactName
+        );
+        return waTemplateContact;
+    }
+
+    const waContactWebLink = _createWaContactWebLink(
+        props.phoneNumber,
+        props.contactName,
+        props.description,
+        props.userLanguage
+    );
+
+    return waContactWebLink;
+}
+
+function _normalizePros({
+    userChannel,
+    contactName,
+    phoneNumber,
+    description = null,
+    userLanguage = 'pt-Br'
+} = {}) {
     if (description instanceof Object) {
         description = description[userLanguage];
     }
@@ -59,32 +95,27 @@ function createWaContact({
         contactName = contactName[userLanguage];
     }
 
-    if (userChannel === 'whatsapp') {
-        contactWebLink.type = 'application/json';
-        contactWebLink.content = _createWaTemplateContact(phoneNumber, contactName);
-        return contactWebLink;
-    }
-
-    contactWebLink.type = 'application/vnd.lime.web-link+json';
-    contactWebLink.content = _createWaContactWebLink(
-        phoneNumber,
+    return {
+        userChannel,
         contactName,
+        phoneNumber,
         description,
         userLanguage
-    );
-
-    return contactWebLink;
+    };
 }
 
-function _createWaContactWebLink(phoneNumber, name, description = null, userLanguage = 'ptBr') {
+function _createWaContactWebLink(phoneNumber, name, description = null) {
     const contactWebLinkContent = {
         uri: `https://api.whatsapp.com/send?phone=${phoneNumber}`,
         target: 'blank',
         title: name,
-        text: description,
+        text: description
     };
 
-    return contactWebLinkContent;
+    return {
+        type: 'application/vnd.lime.web-link+json',
+        content: contactWebLinkContent
+    };
 }
 
 function _createWaTemplateContact(phoneNumber, name) {
@@ -93,19 +124,33 @@ function _createWaTemplateContact(phoneNumber, name) {
 
     const nameSplited = name.split(' ');
 
-    return {
+    const phone = (phoneNumber.startsWith('+') ? '' : '+') + phoneNumber;
+
+    const waTemplateContact = {
         type: CONTACT_TYPE,
-        contacts: [{
-            name: {
-                first_name: nameSplited[0],
-                formatted_name: name,
-                last_name: nameSplited.length > 1 ? nameSplited[nameSplited.length - 1] : '',
-            },
-            phones: [{
-                phone: (phoneNumber.startsWith('+') ? '' : '+') + `${phoneNumber}`,
-                type: PHONE_TYPE,
-                wa_id: phoneNumber,
-            }, ],
-        }, ],
+        contacts: [
+            {
+                name: {
+                    first_name: nameSplited[0],
+                    formatted_name: name,
+                    last_name:
+                        nameSplited.length > 1
+                            ? nameSplited[nameSplited.length - 1]
+                            : ''
+                },
+                phones: [
+                    {
+                        phone,
+                        type: PHONE_TYPE,
+                        wa_id: phoneNumber
+                    }
+                ]
+            }
+        ]
+    };
+
+    return {
+        type: 'application/json',
+        content: waTemplateContact
     };
 }
