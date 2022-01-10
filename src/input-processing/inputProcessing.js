@@ -1,55 +1,3 @@
-// Assert [REQUIREMENTS] variables.
-
-let testInput = 'apple';
-console.log(run(testInput, 'text/plain', 'en-US'));
-
-// Code of builder here
-
-function run(inputContent, inputType, userLanguage) {
-    return getSelectedMenuOption(inputContent, inputType, userLanguage);
-}
-
-function getSelectedMenuOption(inputContent, inputType, userLanguage) {
-    let options = [
-        {
-            regex: {
-                'en-US': /^(apple)$/,
-                'pt-BR': /^(maça)$/
-            },
-            value: 'apple'
-        },
-        {
-            regex: {
-                'en-US': /^(pineapple)$/,
-                'pt-BR': /^(abacaxi)$/
-            },
-            value: 'pineapple'
-        },
-        {
-            regex: {
-                'en-US': /^(strawberry)$/,
-                'pt-BR': /^(morango)$/
-            },
-            value: 'strawberry'
-        }
-    ];
-    let props = {
-        input: inputContent,
-        inputType,
-        options,
-        userLanguage
-    };
-    let config = {
-        isNumberMenu: true,
-        isReversed: false,
-        shouldRemoveSpecialCharacters: true,
-        shouldRemoveWhiteSpaces: false
-    };
-    let selectedMenuOption = validateInputOptions(props, config);
-
-    return selectedMenuOption;
-}
-
 // Below are all scripts used to process inputs
 // It should be put in the router resources in order to be used by the above script
 
@@ -64,7 +12,10 @@ function validateInputOptions(
         isNumberMenu = false,
         isReversed = false,
         shouldRemoveSpecialCharacters = true,
-        shouldRemoveWhiteSpaces = true
+        shouldRemoveWhiteSpaces = false,
+        shouldRemoveExcessOfWhiteSpaces = true,
+        shouldAssertInputType = true,
+        unexpectedInputTracking = 'Input inesperado'
     } = {}
 ) {
     let props = {
@@ -77,19 +28,27 @@ function validateInputOptions(
         isNumberMenu,
         isReversed,
         shouldRemoveSpecialCharacters,
-        shouldRemoveWhiteSpaces
+        shouldRemoveWhiteSpaces,
+        shouldRemoveExcessOfWhiteSpaces
     };
 
-    const UNEXPECTED_INPUT = 'Input inesperado';
+    const UNEXPECTED_INPUT = 'unexpected_input';
     let inputInfo = {
         input,
         value: UNEXPECTED_INPUT,
-        tracking: UNEXPECTED_INPUT,
-        inputMatch: UNEXPECTED_INPUT,
-        inputMatchClean: UNEXPECTED_INPUT,
-        chosenOptionNumber: UNEXPECTED_INPUT
+        matchInput: UNEXPECTED_INPUT,
+        matchInputCleaned: UNEXPECTED_INPUT,
+        chosenOptionIndex: UNEXPECTED_INPUT,
+        chosenOptionNumber: UNEXPECTED_INPUT,
+        tracking: unexpectedInputTracking,
+        language: userLanguage,
+        error: null
     };
-    if (isInvalidType(inputType)) {
+
+    if (shouldAssertInputType && !isValidType(inputType)) {
+        return inputInfo;
+    }
+    if (!isInputQualifiedForValidation(props.input)) {
         return inputInfo;
     }
 
@@ -97,71 +56,98 @@ function validateInputOptions(
         props = normalizeProps(props);
         let { options, userLanguage } = props;
 
-        input = config.shouldRemoveWhiteSpaces
-            ? removeExcessWhiteSpace(input)
+        input = config.shouldRemoveExcessOfWhiteSpaces
+            ? removeExcessOfWhiteSpace(input)
             : input;
         let inputCleaned = config.shouldRemoveSpecialCharacters
             ? removeSpecialCharacters(input, config)
             : input;
 
         for (let option in options) {
-            let matching = new RegExp(options[option].regex, 'gi');
-            let numberOption = parseInt(option) + 1;
-            let matchArray = null;
-            if (config.isReversed) {
-                numberOption = options.length - parseInt(option);
-            }
+            let currentOption = options[option];
+            let currentOptionIndex = parseInt(option);
+            let currentOptionNumber = config.isReversed
+                ? options.length - currentOptionIndex
+                : currentOptionIndex + 1;
+            let currentOptionRegex = new RegExp(currentOption.regex, 'gi');
+
+            let match = null;
+
             if (config.isNumberMenu) {
-                let matchingNumber = new RegExp(
-                    getNumberWrittenRegex(numberOption, userLanguage),
+                let currentOptionNumberRegex = new RegExp(
+                    getNumberWrittenRegex(currentOptionNumber, userLanguage),
                     'gi'
                 );
-                matchArray = matchingNumber.exec(input);
+                match = currentOptionNumberRegex.exec(input);
 
-                if (!matchArray) {
-                    matchArray = matchingNumber.exec(inputCleaned);
+                if (!match) {
+                    match = currentOptionNumberRegex.exec(inputCleaned);
                 }
             }
-            if (!matchArray) {
-                matchArray = matching.exec(input);
+            if (!match) {
+                match = currentOptionRegex.exec(input);
             }
-            if (!matchArray) {
-                matchArray = matching.exec(inputCleaned);
+            if (!match) {
+                match = currentOptionRegex.exec(inputCleaned);
             }
-            if (matchArray) {
-                inputInfo.value = options[option].value;
-                inputInfo.chosenOptionNumber = parseInt(option) + 1;
-                if (options[option].tracking) {
-                    inputInfo.tracking = options[option].tracking;
-                } else {
-                    inputInfo.tracking = getCleanedInputToTracking(
-                        options[option].value,
-                        config
-                    );
-                }
-                inputInfo.inputMatch = matchArray.shift();
-                inputInfo.inputMatchClean = removeSpecialCharacters(
-                    inputInfo.inputMatch,
-                    config
+            if (match) {
+                inputInfo = buildInputInfoWithMatch(
+                    inputInfo,
+                    match,
+                    currentOption,
+                    currentOptionIndex,
+                    currentOptionNumber
                 );
                 break;
             }
         }
     } catch (exception) {
-        throw exception;
+        inputInfo.error = exception.message;
     } finally {
         return inputInfo;
     }
 }
 
-function isInvalidType(inputType) {
+function buildInputInfoWithMatch(
+    inputInfo,
+    match,
+    matchOption,
+    matchOptionIndex,
+    matchOptionNumber
+) {
+    let { value, tracking, regex, ...additional } = matchOption;
+
+    inputInfo.value = value;
+    inputInfo.chosenOptionIndex = matchOptionIndex;
+    inputInfo.chosenOptionNumber = matchOptionNumber;
+
+    inputInfo.tracking = tracking || getCleanedValueToTracking(value);
+
+    inputInfo.matchInput = match.shift();
+    inputInfo.matchInputCleaned = removeSpecialCharacters(inputInfo.matchInput);
+
+    return Object.assign(inputInfo, { ...additional });
+}
+
+function isInputQualifiedForValidation(inputContent) {
+    const REGEX_ONLY_WHITE_SPACE = RegExp('^\\s*$', 'gi');
+    if (
+        !inputContent ||
+        inputContent === '' ||
+        REGEX_ONLY_WHITE_SPACE.exec(inputContent)
+    ) {
+        return false;
+    }
+    return true;
+}
+
+function isValidType(inputType) {
     const validType = 'text/plain';
-    return inputType !== validType;
+    return inputType === validType;
 }
 
 function normalizeProps(props) {
-    let options = normalizeOptions(props);
-    props.options = options;
+    props.options = normalizeOptions(props);
     return props;
 }
 
@@ -169,96 +155,52 @@ function normalizeOptions(props) {
     let { options, userLanguage } = props;
 
     return options.map((option) => {
-        let obj = {};
+        let obj = {
+            ...option
+        };
         if (option.regex[userLanguage]) {
             obj.regex = option.regex[userLanguage];
         } else {
             obj.regex = option.regex;
         }
-        obj.value = option.value;
         return obj;
     });
 }
 
 function capitalizeAll(text) {
-    text = removeExcessWhiteSpace(text);
-    const SPACE_STR = ' ';
-    let loweredText = text.toLowerCase();
-    let words = loweredText.split(SPACE_STR);
-    for (let word in words) {
-        let capitalizedWord = words[word];
-        let firstLetter = capitalizedWord[0];
-        capitalizedWord = firstLetter.toUpperCase() + capitalizedWord.slice(1);
-        words[word] = capitalizedWord;
-    }
-    return words.join(SPACE_STR);
+    return text.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 }
 
-function capitalizeFirst(text) {
-    text = removeExcessWhiteSpace(text);
-    let loweredText = text.toLowerCase();
-    let firstLetter = loweredText[0];
-    let capitalizedText = firstLetter.toUpperCase() + loweredText.slice(1);
-    return capitalizedText;
+function capitalizeFirstLetter(text) {
+    return text.replace(/^\w/g, (l) => l.toUpperCase());
 }
 
 function removeWhiteSpace(input) {
     input = input.trim();
     const EMPTY_STR = '';
     const WHITE_SPACES = RegExp('(\\s+)', 'gi');
+
     return input.replace(WHITE_SPACES, EMPTY_STR);
 }
 
-function removeExcessWhiteSpace(input) {
+function removeExcessOfWhiteSpace(input) {
     input = input.trim();
     const SPACE_STR = ' ';
-    const WHITE_SPACES = RegExp('(\\s+)', 'gi');
+    const WHITE_SPACES = RegExp('(\\s{2,})', 'gi');
+
     return input.replace(WHITE_SPACES, SPACE_STR);
 }
 
-function removeSpecialCharacters(input, config) {
+function removeSpecialCharacters(input) {
+    input = replaceSpecialLetters(input);
     const EMPTY_STR = '';
     const SPECIAL_CHAR = RegExp('[^\\w\\s]*', 'gi');
-    input = replaceSpecialLetters(input);
-    input = input.replace(SPECIAL_CHAR, EMPTY_STR);
-    input = config.shouldRemoveWhiteSpaces
-        ? removeExcessWhiteSpace(input)
-        : input;
-    return input;
+
+    return input.replace(SPECIAL_CHAR, EMPTY_STR);
 }
 
 function replaceSpecialLetters(input) {
-    const specialCharToCommonChar = {
-        á: 'a',
-        à: 'a',
-        â: 'a',
-        ä: 'a',
-        ã: 'a',
-        é: 'e',
-        è: 'e',
-        ê: 'e',
-        ë: 'e',
-        í: 'i',
-        ì: 'i',
-        î: 'i',
-        ï: 'i',
-        ó: 'o',
-        ò: 'o',
-        ô: 'o',
-        õ: 'o',
-        ö: 'o',
-        ù: 'u',
-        ú: 'u',
-        û: 'u',
-        ü: 'u',
-        ñ: 'n',
-        ç: 'c'
-    };
-    for (const key in specialCharToCommonChar) {
-        let keyRegex = new RegExp(`${key}`, 'gi');
-        input = input.replace(keyRegex, specialCharToCommonChar[key]);
-    }
-    return input;
+    return input.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function getNumberWrittenRegex(number, userLanguage) {
@@ -328,28 +270,141 @@ function getNumberWrittenRegex(number, userLanguage) {
     return numbersWrittenRegex[`${number}`][userLanguage];
 }
 
-function getCleanedInputToNlp(input) {
-    let cleanedInputToNlp = replaceSpecialLetters(input);
-    cleanedInputToNlp = removeLinks(cleanedInputToNlp);
-    cleanedInputToNlp = removeExcessWhiteSpace(cleanedInputToNlp);
-    return cleanedInputToNlp;
+function getCleanedInput(input) {
+    let cleanedInput = replaceSpecialLetters(input);
+    cleanedInput = removeLinks(cleanedInput);
+    cleanedInput = removeExcessOfWhiteSpace(cleanedInput);
+
+    return cleanedInput;
 }
 
 // The convention of Trackings is only first letter uppercase without special characters
 
-function getCleanedInputToTracking(input, config) {
-    let cleanedInputToTracking = removeSpecialCharacters(input, config);
-    cleanedInputToTracking = capitalizeFirst(cleanedInputToTracking);
-    return cleanedInputToTracking;
+function getCleanedValueToTracking(value) {
+    let cleanedValue = value.trim();
+    cleanedValue = removeSpecialCharacters(value);
+    cleanedValue = capitalizeFirstLetter(cleanedValue);
+
+    return cleanedValue;
 }
 
 function removeLinks(input) {
     const EMPTY_STR = '';
-    const LINK_STR = RegExp(
+    const LINK_REGEX = RegExp(
         /\b(((https?:\/\/)[^\s.]+|(www))\.[\w][^\s]+)\b/,
         'gi'
     );
     input = replaceSpecialLetters(input);
-    input = input.replace(LINK_STR, EMPTY_STR);
+    input = input.replace(LINK_REGEX, EMPTY_STR);
     return input;
 }
+
+// TEST CODE
+// DO NOT PUT THE FOLLOWING CODE IN ROUTER RESOURCES
+
+function run(inputContent, inputType, userLanguage) {
+    return getSelectedMenuOption(inputContent, inputType, userLanguage);
+}
+
+function getSelectedMenuOption(inputContent, inputType) {
+    let options = [
+        {
+            regex: /(0?9)|(set(embro)?)|(september)/,
+            value: '9',
+            tracking: 'setembro'
+        },
+        {
+            regex: /(10)|(out(ubro)?)|(october)/,
+            value: '10',
+            tracking: 'outubro'
+        },
+        {
+            regex: /(11)|(nov(embro)?)|(november)/,
+            value: '11',
+            tracking: 'novembro'
+        },
+        {
+            regex: /(12)|(dez(embro)?)|(december)/,
+            value: '12',
+            tracking: 'dezembro'
+        }
+    ];
+
+    let props = {
+        input: inputContent,
+        options,
+        inputType
+    };
+    // let config = {
+    //     //isNumberMenu: false,
+    //     // shouldRemoveSpecialCharacters: false
+    // };
+
+    let monthSelected = validateInputOptions(props);
+    return monthSelected;
+}
+// function getSelectedMenuOption(inputContent, inputType, userLanguage) {
+//     let options = [
+//         {
+//             regex: {
+//                 'en-US': /^(apple)$/,
+//                 'pt-BR': /^(maça)$/
+//             },
+//             value: 'apple'
+//         },
+//         {
+//             regex: {
+//                 'en-US': /^(pineapple)$/,
+//                 'pt-BR': /^(abacaxi)$/
+//             },
+//             value: 'pineapple'
+//         },
+//         {
+//             regex: {
+//                 'en-US': /^(strawberry)$/,
+//                 'pt-BR': /^(morango)$/
+//             },
+//             value: 'strawberry',
+//             myProp: 'test'
+//         }
+//     ];
+//     let props = {
+//         input: inputContent,
+//         inputType,
+//         options,
+//         userLanguage
+//     };
+//     let config = {
+//         isNumberMenu: true,
+//         isReversed: false,
+//         shouldRemoveSpecialCharacters: true,
+//         shouldRemoveWhiteSpaces: false
+//     };
+//     let selectedMenuOption = validateInputOptions(props, config);
+
+//     return selectedMenuOption;
+// }
+
+// Assert [REQUIREMENTS] variables.
+
+let testInput = '9';
+console.log(run(testInput, 'text/plain', 'en-US'));
+
+// IMPORTS USED BY NODE, DO NOT COPY THIS
+
+module.exports = {
+    validateInputOptions,
+    isValidType,
+    normalizeProps,
+    normalizeOptions,
+    capitalizeAll,
+    capitalizeFirstLetter,
+    removeWhiteSpace,
+    removeExcessOfWhiteSpace,
+    removeSpecialCharacters,
+    replaceSpecialLetters,
+    getNumberWrittenRegex,
+    getCleanedInput,
+    getCleanedValueToTracking,
+    removeLinks
+};

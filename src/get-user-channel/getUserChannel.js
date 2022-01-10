@@ -26,5 +26,12 @@ function getUserChannel(contactIdentity) {
     return CHANNEL_IDENTIFIERS[contactChannelId] || DEFAULT_CHANNEL;
 }
 
-// Just for testing purposes
+// TEST CODE
+
 console.log(run('551140028922@wa.gw.msging.net'));
+
+// IMPORTS USED BY NODE, DO NOT COPY THIS
+
+module.exports = {
+    getUserChannel
+};

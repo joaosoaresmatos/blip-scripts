@@ -12,14 +12,20 @@
     "plugins": ["prettier"],
     "rules": {
         "prettier/prettier": "error",
-        "indent": ["error", 4, { "SwitchCase": 2 }],
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 2
+            }
+        ],
         "no-console": "off",
+        "no-var": "off",
         "camelcase": "off",
         "class-methods-use-this": "off",
         "radix": "off",
         "consistent-return": "off",
         "no-underscore-dangle": "off",
-        "no-var": ["error"],
         "semi": ["error", "always"],
         "comma-dangle": ["error", "never"],
         "curly": ["error", "all"],
