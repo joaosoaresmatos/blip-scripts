@@ -172,6 +172,9 @@ function getQuickReply(props, config) {
     let menuText = menuFields.text;
     let menuOptions = menuFields.options;
     let quickReplyOptions = [];
+    if (menuOptions && typeof menuOptions === 'object') {
+        menuOptions = convertSectionOptionsToArray(menuOptions);
+    }
     if (menuOptions) {
         for (let i = 0; i < menuOptions.length; i++) {
             quickReplyOptions.push({
@@ -189,6 +192,15 @@ function getQuickReply(props, config) {
         quickReplyContent.scope = 'immediate';
     }
     return quickReplyContent;
+}
+
+function convertSectionOptionsToArray(menuOptions) {
+    const sections = Object.keys(menuOptions);
+    let options = [];
+    for (let i = 0; i < sections.length; i++) {
+        options = options.concat(menuOptions[sections[i]]);
+    }
+    return options;
 }
 
 function getWppQuickReply(props, config) {
