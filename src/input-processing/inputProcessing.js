@@ -2,35 +2,47 @@
 
 let testInput = 'apple';
 console.log(run(testInput, 'text/plain', 'en-US'));
+console.log(getSelectedMenuOptionMonolingue('inverno', 'text/plain'));
 
 // Code of builder here
 
 function run(inputContent, inputType, userLanguage) {
-    return getSelectedMenuOption(inputContent, inputType, userLanguage);
+    return getSelectedMenuOptionMultilingue(
+        inputContent,
+        inputType,
+        userLanguage
+    );
 }
 
-function getSelectedMenuOption(inputContent, inputType, userLanguage) {
+function getSelectedMenuOptionMultilingue(
+    inputContent,
+    inputType,
+    userLanguage
+) {
     let options = [
         {
             regex: {
                 'en-US': /^(apple)$/,
                 'pt-BR': /^(maça)$/
             },
-            value: 'apple'
+            value: 'apple',
+            tracking: 'Apple|1'
         },
         {
             regex: {
                 'en-US': /^(pineapple)$/,
                 'pt-BR': /^(abacaxi)$/
             },
-            value: 'pineapple'
+            value: 'pineapple',
+            tracking: 'Pineapple|2'
         },
         {
             regex: {
                 'en-US': /^(strawberry)$/,
                 'pt-BR': /^(morango)$/
             },
-            value: 'strawberry'
+            value: 'strawberry',
+            tracking: 'Strawberry|3'
         }
     ];
     let props = {
@@ -43,6 +55,45 @@ function getSelectedMenuOption(inputContent, inputType, userLanguage) {
         isNumberMenu: true,
         isReversed: false,
         shouldRemoveSpecialCharacters: true,
+        shouldRemoveWhiteSpaces: false
+    };
+    let selectedMenuOption = validateInputOptions(props, config);
+
+    return selectedMenuOption;
+}
+
+function getSelectedMenuOptionMonolingue(inputContent, inputType) {
+    let options = [
+        {
+            regex: /\b(?:verao)\b/,
+            value: 'verao',
+            tracking: 'Estacao quente'
+        },
+        {
+            regex: /\b(?:primavera)\b/,
+            value: 'primavera',
+            tracking: 'Estacao florida'
+        },
+        {
+            regex: /\b(?:outono)\b/,
+            value: 'outono',
+            tracking: 'Estacao das folhas'
+        },
+        {
+            regex: /\b(?:inverno)\b/,
+            value: 'inverno',
+            tracking: 'Estacao fria'
+        }
+    ];
+    let props = {
+        input: inputContent,
+        inputType,
+        options
+    };
+    let config = {
+        isNumberMenu: false,
+        isReversed: false,
+        shouldRemoveSpecialCharacters: false,
         shouldRemoveWhiteSpaces: false
     };
     let selectedMenuOption = validateInputOptions(props, config);
@@ -174,6 +225,9 @@ function normalizeOptions(props) {
             obj.regex = option.regex[userLanguage];
         } else {
             obj.regex = option.regex;
+        }
+        if (option.tracking) {
+            obj.tracking = option.tracking;
         }
         obj.value = option.value;
         return obj;
